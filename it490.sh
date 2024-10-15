@@ -10,26 +10,6 @@ show_details() {
     echo "Last Updated: Oct 15, 2024"
 }
 
-# Clone repository function
-clone_repository() {
-    local repo_url="$1"
-    local destination="$2"
-
-    if [ -z "$repo_url" ] || [ -z "$destination" ]; then
-        echo "Error: Repository URL or destination path missing."
-        echo "Usage: $0 -clone <repository_url> <destination>"
-        exit 1
-    fi
-
-    echo "Cloning repository from $repo_url to $destination ..."
-    git clone "$repo_url" "$destination"
-    if [ $? -ne 0 ]; then
-        echo "Failed to clone repository. Check the URL or destination path."
-        exit 1
-    fi
-    echo "Repository cloned successfully."
-}
-
 # Ensure the script is run with sudo privileges
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this script with sudo."
@@ -65,6 +45,27 @@ install_packages() {
         fi
     done < "$package_file"
     echo "All packages installed."
+}
+
+
+# Clone repository function
+clone_repository() {
+    local repo_url="$1"
+    local destination="$2"
+
+    if [ -z "$repo_url" ] || [ -z "$destination" ]; then
+        echo "Error: Repository URL or destination path missing."
+        echo "Usage: $0 -clone <repository_url> <destination>"
+        exit 1
+    fi
+
+    echo "Cloning repository from $repo_url to $destination ..."
+    git clone "$repo_url" "$destination"
+    if [ $? -ne 0 ]; then
+        echo "Failed to clone repository. Check the URL or destination path."
+        exit 1
+    fi
+    echo "Repository cloned successfully."
 }
 
 # Function to set up MySQL
