@@ -122,6 +122,6 @@ case "$1" in
         setup_mysql
         ;;
     *)
-        echo "Usage: $0 -details | -clone <repository_url> <destination>"
+        echo "Usage: $0 -details | -clone <repository_url> <destination> | -install <package_list_file> | -mysql "
         ;;
 esac

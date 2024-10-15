@@ -1,5 +1,5 @@
 git
-mysql
+mysql-server
 rabbitmq-server
 php-amqp
 apache2
