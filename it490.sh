@@ -10,16 +10,12 @@ show_details() {
     echo "Last Updated: Oct 15, 2024"
 }
 
-# Ensure the script is run with sudo privileges
+# Sudo
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this script with sudo."
     exit 1
 fi
-
-# Use sudo to cache credentials at the start
 sudo -v
-
-# Keep sudo active in the background
 while true; do 
     sudo -n true
     sleep 60
@@ -95,8 +91,8 @@ setup_mysql() {
     echo "Running mysql_secure_installation..."
     sudo mysql_secure_installation <<EOF
 y
-your_new_password
-your_new_password
+rabbitMQIT490!
+rabbitMQIT490!
 y
 y
 y
