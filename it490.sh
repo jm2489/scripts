@@ -80,7 +80,7 @@ setup_mysql() {
     # Execute MySQL setup using the SQL file
     if [ -f mysql_setup.sql ]; then
         echo "Running MySQL configuration from mysql_setup.sql..."
-        sudo mysql -u root < mysql_setup.sql
+        sudo mysql < mysql_setup.sql
     else
         echo "Error: mysql_setup.sql not found."
         exit 1
