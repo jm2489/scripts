@@ -80,7 +80,7 @@ setup_mysql() {
     # Execute MySQL setup using the SQL file
     if [ -f mysql_setup.sql ]; then
         echo "Running MySQL configuration from mysql_setup.sql..."
-        mysql -u root -p'your_root_password' < mysql_setup.sql
+        sudo mysql -u root < mysql_setup.sql
     else
         echo "Error: mysql_setup.sql not found."
         exit 1
@@ -91,8 +91,7 @@ setup_mysql() {
     echo "Running mysql_secure_installation..."
     sudo mysql_secure_installation <<EOF
 y
-rabbitMQIT490!
-rabbitMQIT490!
+2
 y
 y
 y
