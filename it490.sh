@@ -119,7 +119,8 @@ case "$1" in
         install_packages "$2"
         ;;
     -mysql)
-
+        setup_mysql
+        ;;
     *)
         echo "Usage: $0 -details | -clone <repository_url> <destination>"
         ;;
