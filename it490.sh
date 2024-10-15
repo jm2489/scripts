@@ -68,6 +68,7 @@ clone_repository() {
 # The first infinity stone. LOL
 setup_mysql() {
     echo "Setting up MySQL ..."
+    chmod 600 client.cnf
 
     # Modify the MySQL bind-address to allow connections from any IP
     echo "Configuring MySQL bind-address..."
@@ -99,6 +100,12 @@ y
 EOF
 
     echo "MySQL configuration completed successfully."
+    echo "Showing databse and tables:"
+    mysql --defaults-file=client.cnf -e 'show databases;'
+    mysql --defaults-file=client.cnf -e 'show tables;' logindb
+    mysql --defaults-file=client.cnf -e 'desc users' logindb
+    echo "Login info: User: rabbit Password: rabbitIT490!"
+    echo "MySQL setup complete"
 }
 
 
