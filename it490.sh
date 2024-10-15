@@ -46,22 +46,22 @@ install_packages() {
 
 # Clone repository function
 clone_repository() {
-    local repo_url="$1"
-    local destination="$2"
-
-    if [ -z "$repo_url" ] || [ -z "$destination" ]; then
-        echo "Error: Repository URL or destination path missing."
-        echo "Usage: $0 -clone <repository_url> <destination>"
+    # Ensure repos.txt exists
+    if [ ! -f repos.txt ]; then
+        echo "Error: repos.txt not found."
         exit 1
     fi
 
-    echo "Cloning repository from $repo_url to $destination ..."
-    git clone "$repo_url" "$destination"
-    if [ $? -ne 0 ]; then
-        echo "Failed to clone repository. Check the URL or destination path."
-        exit 1
-    fi
-    echo "Repository cloned successfully."
+    # Iterate over each URL and clone the repository
+    while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
+        repo_name=$(basename "$repo_url" .git)  # Extract repo name from URL
+        echo "Cloning $repo_name from $repo_url ..."
+        git clone "$repo_url" "$repo_name" || {
+            echo "Failed to clone $repo_url"
+            continue
+        }
+        echo "$repo_name cloned successfully."
+    done < repos.txt
 }
 
 # Function to set up MySQL
@@ -124,6 +124,6 @@ case "$1" in
         setup_mysql
         ;;
     *)
-        echo "Usage: $0 -details | -clone <repository_url> <destination> | -install <package_list_file> | -mysql "
+        echo "Usage: $0 -details | -clone | -mysql | -install <package_list_file> "
         ;;
 esac
