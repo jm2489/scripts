@@ -102,7 +102,7 @@ setup_rabbitmq() {
     # Call child script rabbitmq.sh
     sudo ./rabbitmq.sh
     status=$?
-    if [ status -eq 0 ]; then
+    if [ "$status" -eq 0 ]; then
         echo "RabbitMQ server setup complete"
     else
         echo "Failed to setup RabbitMQ server (exit code: $status)"
