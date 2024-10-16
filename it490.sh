@@ -116,10 +116,15 @@ setup_rabbitmq() {
                 sudo rm -rf /hom/$user/RabbitMQ
                 sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
                 echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
+                exit 0
             else
                 echo "Exiting."
                 exit 1
             fi
+        else
+            sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
+            echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
+            exit 0
         fi
     else
         echo "Failed to setup RabbitMQ server (exit code: $status)"
@@ -131,9 +136,9 @@ setup_rabbitmq() {
 # Third infinity stone... The kidney stone.
 setup_apache2() {
     echo "Setting up apache2"
-    # sudo ./apache2.sh
-    # status=$?
-    status=0 # testing purposes
+    sudo ./apache2.sh
+    status=$?
+    # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d NJIT ]; then
@@ -165,7 +170,8 @@ setup_apache2() {
         # Ask user if they would like to load localhost/index.html now
         read -p "Would you like to load localhost/index.html now? [y/n] " answer
         if [[ "$answer" =~ ^[Yy]$ ]]; then
-            xdg-open http://localhost/index.html
+            sudo -u "$user" xdg-open http://localhost/index.html > /dev/null 2>&1 &
+            exit 0
         else
             echo "Open http://localhost/index.html in browser to view web page"
             exit 1
