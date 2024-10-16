@@ -269,6 +269,6 @@ case "$1" in
         setup_apache2
         ;;
     *)
-        echo "Usage: $0 -details | -git-clone | -mysql | -install-packages"
+        echo "Usage: $0 -details | -git-clone | -mysql | -install-packages | -apache2 "
         ;;
 esac
