@@ -16,6 +16,7 @@ install_packages() {
 
     if [ ! -f "$package_file" ]; then
         echo "Package file not found: $package_file"
+        echo "Please run sudo ./it490.sh <package_list_file>"
         exit 1
     fi
 
@@ -42,7 +43,7 @@ clone_repository() {
 
     # Iterate over each URL and clone the repository
     while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
-        repo_name=$(basename "$repo_url" .git)  # Extract repo name from URL
+        repo_name=$(basename "$repo_url" .git)
         echo "Cloning $repo_name from $repo_url ..."
         git clone "$repo_url" "$repo_name" || {
             echo "Failed to clone $repo_url"
@@ -58,7 +59,7 @@ setup_mysql() {
     echo "Setting up MySQL ..."
     chmod 600 client.cnf
 
-    # Modify the MySQL bind-address to allow connections from any IP
+    # Modify the MySQL bind-address to allow connections from any IP in the mysqld.cnf
     echo "Configuring MySQL bind-address..."
     sudo sed -i "s/^bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
 
@@ -66,7 +67,6 @@ setup_mysql() {
     echo "Restarting MySQL service..."
     sudo systemctl restart mysql
 
-    # Execute MySQL setup using the SQL file
     if [ -f mysql_setup.sql ]; then
         echo "Running MySQL configuration from mysql_setup.sql..."
         sudo mysql < mysql_setup.sql
@@ -155,6 +155,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
+        setup_rabbitmq
         ;;
     *)
         echo "Usage: $0 -details | -clone | -mysql | -install <package_list_file> "
