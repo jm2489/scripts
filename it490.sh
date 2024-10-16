@@ -99,9 +99,9 @@ EOF
 setup_rabbitmq() {
 
     echo "Setting up RabbitMQ ..."
-    # sudo ./rabbitmq.sh
-    # status=$?
-    status=0 # testing purposes
+    sudo ./rabbitmq.sh
+    status=$?
+    # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d NJIT ]; then
