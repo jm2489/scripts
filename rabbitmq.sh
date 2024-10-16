@@ -1,14 +1,13 @@
 #!/bin/bash
 
 # Load variables from the .env file
-if [ ! -f testRabbitMQ.env ]; then
-    echo "Error: testRabbitMQ.env not found."
+if [ ! -f rabbitMQ.env ]; then
+    echo "Error: rabbitMQ.env not found."
     exit 1  # Exit with failure if .env file is missing
 fi
-source testRabbitMQ.env
 
 # Load variables from the .env file
-source testRabbitMQ.env
+source rabbitMQ.env
 
 # Enable and start rabbitmq-server
 systemctl enable rabbitmq-server

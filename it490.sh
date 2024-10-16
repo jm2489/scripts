@@ -100,7 +100,7 @@ EOF
 setup_rabbitmq() {
     echo "Setting up RabbitMQ ..."
     # Call child script rabbitmq.sh
-    ./rabbitmq.sh
+    sudo -E ./rabbitmq.sh
     status=$?
     if [ "$status" -eq 0 ]; then
         echo "RabbitMQ server setup complete"
@@ -155,6 +155,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
+        chmod +x rabbitmq.sh
         setup_rabbitmq
         ;;
     *)
