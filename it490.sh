@@ -99,13 +99,33 @@ EOF
 setup_rabbitmq() {
 
     echo "Setting up RabbitMQ ..."
-    sudo ./rabbitmq.sh
-    status=$?
+    # sudo ./rabbitmq.sh
+    # status=$?
+    status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
-        echo "RabbitMQ server setup complete"
+        user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+        if [ ! -d NJIT ]; then
+            sudo -u $user $0 -git-clone
+        else
+            echo "Directory NJIT already exists!"
+            echo "Skipping git clone..."
+        fi
+        # Prompt user to continue with overwriting directory. All other responses continue
+        if [ -d /home/$user/RabbitMQ ]; then
+            read -p "Script will overwrite directory /home/$user/RabbitMQ.. Do you want to continue? [y/n] " answer
+            if [[ "$answer" =~ ^[Yy]$ ]]; then
+                sudo rm -rf /hom/$user/RabbitMQ
+                sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
+                echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
+            else
+                echo "Exiting."
+                exit 1
+            fi
+        fi
     else
         echo "Failed to setup RabbitMQ server (exit code: $status)"
     fi
+    echo "Done."
 }
 
 
