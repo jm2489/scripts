@@ -46,7 +46,18 @@ install_packages() {
 
 # Clone repository function
 clone_repository() {
+
     # Ensure the file githubRepos exists and in current directory
+    # Set the directory where repositories will be cloned
+    GIT_DIR=~/git
+
+    # Create the git directory if it doesn't exist, and change into it
+    if [ ! -d "$GIT_DIR" ]; then
+        echo "Creating $GIT_DIR directory..."
+        mkdir -p "$GIT_DIR"
+    fi
+    cd "$GIT_DIR" || exit 1
+    
     if [ ! -f githubRepos ]; then
         echo "Error: File githubRepos not found."
         exit 1
