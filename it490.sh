@@ -47,7 +47,7 @@ install_packages() {
 # Clone repository function
 clone_repository() {
     # Ensure repos.txt exists
-    if [ ! -f repos.txt ]; then
+    if [ ! -f githubRepos.txt ]; then
         echo "Error: repos.txt not found."
         exit 1
     fi
@@ -61,7 +61,7 @@ clone_repository() {
             continue
         }
         echo "$repo_name cloned successfully."
-    done < repos.txt
+    done < githubRepos.txt
 }
 
 # Function to set up MySQL
@@ -115,7 +115,7 @@ case "$1" in
         show_details
         ;;
     -clone)
-        clone_repository "$2" "$3"
+        clone_repository
         ;;
     -install)
         install_packages "$2"
