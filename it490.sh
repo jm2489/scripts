@@ -194,6 +194,12 @@ setup_apache2() {
     fi
 }
 
+# Setup Wireguard VPN
+# Will do later.. Really tired right now....
+setup_wireguard() {
+
+}
+
 
 # Main
 case "$1" in
