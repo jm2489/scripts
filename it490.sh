@@ -1,29 +1,28 @@
 #!/bin/bash
 
-# Function to display the details
+# Function to display the details of this wonderfully curated script!
 show_details() {
     echo "Script Name: it490.sh"
     echo "Description: This is my infinity gauntlet script to setup the IT490 project from a fresh Ubuntu installation."
     echo "             Because I'm tired of having to be like Thanos and say, 'Fine, I'll do this myself.'"
     echo "Author: Judrianne Mahigne (jm2489@njit.edu)"
     echo "Version: 1.00"
-    echo "Last Updated: Oct 15, 2024"
+    echo "Last Updated: Oct 16, 2024"
 }
 
 # Function to install packages from a file
 install_packages() {
-    local package_file="$1"
+
+    package_file="packageList"
 
     if [ ! -f "$package_file" ]; then
-        echo "Package file not found: $package_file"
-        echo "Please run sudo ./it490.sh <package_list_file>"
+        echo "Error: Package file packageList not found:"
         exit 1
     fi
 
     echo "Installing packages from $package_file ..."
     while IFS= read -r package || [[ -n "$package" ]]; do
         if ! dpkg -l | grep -q "^ii  $package "; then
-            echo "Installing: $package"
             sudo apt-get install -y "$package"
         else
             echo "$package is already installed."
@@ -35,29 +34,28 @@ install_packages() {
 
 # Clone repository function
 clone_repository() {
+
+    githubRepos="githubRepos"
     
-    if [ ! -f githubRepos ]; then
+    if [ ! -f "$githubRepos" ]; then
         echo "Error: File githubRepos not found."
         exit 1
     fi
 
-    # Iterate over each URL and clone the repository
     while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
-        repo_name=$(basename "$repo_url" .git)
-        echo "Cloning $repo_name from $repo_url ..."
-        git clone "$repo_url" "$repo_name" || {
+        git clone "$repo_url" || {
             echo "Failed to clone $repo_url"
             continue
         }
         echo "$repo_name cloned successfully."
-    done < githubRepos
+    done < "$githubRepos"
 }
 
 # Function to set up MySQL
 # The first infinity stone. LOL
 setup_mysql() {
+
     echo "Setting up MySQL ..."
-    chmod 600 client.cnf
 
     # Modify the MySQL bind-address to allow connections from any IP in the mysqld.cnf
     echo "Configuring MySQL bind-address..."
@@ -97,10 +95,11 @@ EOF
 }
 
 # Setup rabbitmq server
+# Second infinity stone. Idk which infinity stone to match up to what function. Use your imagination
 setup_rabbitmq() {
+
     echo "Setting up RabbitMQ ..."
-    # Call child script rabbitmq.sh
-    sudo -E ./rabbitmq.sh
+    sudo ./rabbitmq.sh
     status=$?
     if [ "$status" -eq 0 ]; then
         echo "RabbitMQ server setup complete"
@@ -110,15 +109,15 @@ setup_rabbitmq() {
 }
 
 
-# Main logic
+# Main
 case "$1" in
     -details)
         show_details
         ;;
-    -clone)
+    -git-clone)
         clone_repository
         ;;
-    -install)
+    -install-packages)
         if [ "$EUID" -ne 0 ]; then
             echo "Need sudo privileges to run -install."
             exit 1
@@ -129,7 +128,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
-        install_packages "$2"
+        install_packages
         ;;
     -mysql)
         if [ "$EUID" -ne 0 ]; then
@@ -155,10 +154,10 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
-        chmod +x rabbitmq.sh
+        chmod 755 rabbitmq.sh
         setup_rabbitmq
         ;;
     *)
-        echo "Usage: $0 -details | -clone | -mysql | -install <package_list_file> "
+        echo "Usage: $0 -details | -git-clone | -mysql | -install-packages"
         ;;
 esac
