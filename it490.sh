@@ -57,7 +57,7 @@ setup_mysql() {
 
     echo "Setting up MySQL ..."
 
-    # Modify the MySQL bind-address to allow connections from any IP in the mysqld.cnf
+    # Modify the MySQL bind-address to allow connections from any IP in the /etc/mysql/mysqld.cnf
     echo "Configuring MySQL bind-address..."
     sudo sed -i "s/^bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
 
@@ -110,7 +110,6 @@ setup_rabbitmq() {
             echo "Directory NJIT already exists!"
             echo "Skipping git clone..."
         fi
-        # Prompt user to continue with overwriting directory. All other responses continue
         if [ -d /home/$user/RabbitMQ ]; then
             read -p "Script will overwrite directory /home/$user/RabbitMQ.. Do you want to continue? [y/n] " answer
             if [[ "$answer" =~ ^[Yy]$ ]]; then
@@ -126,6 +125,54 @@ setup_rabbitmq() {
         echo "Failed to setup RabbitMQ server (exit code: $status)"
     fi
     echo "Done."
+}
+
+# Setup apache2
+# Third infinity stone... The kidney stone.
+setup_apache2() {
+    echo "Setting up apache2"
+    # sudo ./apache2.sh
+    # status=$?
+    status=0 # testing purposes
+    if [ "$status" -eq 0 ]; then
+        user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+        if [ ! -d NJIT ]; then
+            sudo -u $user $0 -git-clone
+        else
+            echo "Directory NJIT already exists!"
+            echo "Skipping git clone..."
+        fi
+        if [ -d /var/www/html ]; then
+            read -p "Script will overwrite directory /var/www/html.. Do you want to continue? [y/n] " answer
+            if [[ "$answer" =~ ^[Yy]$ ]]; then
+                sudo rm -rf /var/www/html
+                sudo mkdir /var/www/html
+                sudo cp NJIT/IT490/Web/index.html /var/www/html
+                sudo cp -r NJIT/IT490/Web/php /var/www/html
+                sudo cp -r NJIT/IT490/Web/media /var/www/html
+                echo "Copied Web directory to /var/www/html"
+                echo "Restarting apache2 services"
+                sudo systemctl restart apache2
+            else
+                echo "Exiting."
+                exit 1
+            fi
+        else
+            echo "Directory /var/www/html does not exist."
+            echo "Exiting."
+            exit 1
+        fi
+        # Ask user if they would like to load localhost/index.html now
+        read -p "Would you like to load localhost/index.html now? [y/n] " answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            xdg-open http://localhost/index.html
+        else
+            echo "Open http://localhost/index.html in browser to view web page"
+            exit 1
+        fi
+    else
+        echo "Failed to setup Apache2 server (exit code: $status)"
+    fi
 }
 
 
@@ -176,6 +223,20 @@ case "$1" in
         done 2>/dev/null &
         chmod 755 rabbitmq.sh
         setup_rabbitmq
+        ;;
+    -apache2)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -apache2."
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
+        chmod 755 apache2.sh
+        setup_apache2
         ;;
     *)
         echo "Usage: $0 -details | -git-clone | -mysql | -install-packages"
