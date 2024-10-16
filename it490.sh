@@ -96,6 +96,19 @@ EOF
     echo "MySQL setup complete"
 }
 
+# Setup rabbitmq server
+setup_rabbitmq() {
+    echo "Setting up RabbitMQ ..."
+    # Call child script rabbitmq.sh
+    sudo ./rabbitmq.sh
+    status=$?
+    if [ status -eq 0 ]; then
+        echo "RabbitMQ server setup complete"
+    else
+        echo "Failed to setup RabbitMQ server (exit code: $status)"
+    fi
+}
+
 
 # Main logic
 case "$1" in
@@ -130,6 +143,18 @@ case "$1" in
             kill -0 "$$" || exit
         done 2>/dev/null &
         setup_mysql
+        ;;
+    -rabbitmq)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -rabbitmq."
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
         ;;
     *)
         echo "Usage: $0 -details | -clone | -mysql | -install <package_list_file> "
