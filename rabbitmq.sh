@@ -1,11 +1,18 @@
 #!/bin/bash
 
 # Load variables from the .env file
+if [ ! -f testRabbitMQ.env ]; then
+    echo "Error: testRabbitMQ.env not found."
+    exit 1  # Exit with failure if .env file is missing
+fi
+source testRabbitMQ.env
+
+# Load variables from the .env file
 source testRabbitMQ.env
 
 # Enable and start rabbitmq-server
-sudo systemctl enable rabbitmq-server
-sudo systemctl start rabbitmq-server
+systemctl enable rabbitmq-server
+systemctl start rabbitmq-server
 
 # Configure RabbitMQ
 rabbitmqctl add_user "$USER" "$PASSWORD"
@@ -18,3 +25,4 @@ rabbitmq-plugins enable rabbitmq_management
 systemctl restart rabbitmq-server
 
 echo "RabbitMQ setup completed for user '$USER' and vhost '$VHOST'."
+exit 0
