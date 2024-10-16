@@ -73,8 +73,8 @@ setup_mysql() {
         exit 1
     fi
 
-    # Run mysql_secure_installation non-interactively
-    # NEED TO REPLACE WITH MEANINGFUL PASSWORDS PLEASE
+    # Run mysql_secure_installation non-interactively with pre loaded answers below.
+    # Looks really ugly tbh I might do this just the one time.
     echo "Running mysql_secure_installation..."
     sudo mysql_secure_installation <<EOF
 y
@@ -99,9 +99,9 @@ EOF
 setup_rabbitmq() {
 
     echo "Setting up RabbitMQ ..."
-    sudo ./rabbitmq.sh
-    status=$?
-    # status=0 # testing purposes
+    # sudo ./rabbitmq.sh
+    # status=$?
+    status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d NJIT ]; then
@@ -116,7 +116,6 @@ setup_rabbitmq() {
                 sudo rm -rf /hom/$user/RabbitMQ
                 sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
                 echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
-                exit 0
             else
                 echo "Exiting."
                 exit 1
@@ -124,11 +123,25 @@ setup_rabbitmq() {
         else
             sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
             echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
-            exit 0
         fi
     else
         echo "Failed to setup RabbitMQ server (exit code: $status)"
     fi
+    # After RabbitMQ was successfully configured. Set it up in systemd as a service
+    # Very straightforward. Would probably need to do some checks if service of the same name exists and etc. This is fine for now.
+    echo "Editing service file..."
+    sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php /home/$user/RabbitMQ/testRabbitMQServer.php|" /home/$user/RabbitMQ/testRabbitMQServer.service
+    echo "Creating service file in systemd..."
+    sudo cp /home/$user/RabbitMQ/testRabbitMQServer.service /etc/systemd/system/
+    echo "Reloading daemon-service..."
+    sudo systemctl daemon-reload
+    echo "Enabling service..."
+    sudo systemctl enable testRabbitMQServer.service
+    echo "Starting service..."
+    sudo systemctl start testRabbitMQServer.service
+    echo "Checking status..."
+    sudo systemctl status testRabbitMQServer.service --no-pager
+    echo "RabbitMQ daemon service complete"
     echo "Done."
 }
 
@@ -136,9 +149,9 @@ setup_rabbitmq() {
 # Third infinity stone... The kidney stone.
 setup_apache2() {
     echo "Setting up apache2"
-    sudo ./apache2.sh
-    status=$?
-    # status=0 # testing purposes
+    # sudo ./apache2.sh
+    # status=$?
+    status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d NJIT ]; then
@@ -188,6 +201,11 @@ case "$1" in
         show_details
         ;;
     -git-clone)
+        if [ "$EUID" -eq 0 ]; then
+            echo "Detected running with sudo privileges."
+            echo "Please run this -git-clone as a regular user to avoid issues."
+            exit 1
+        fi
         clone_repository
         ;;
     -install-packages)
