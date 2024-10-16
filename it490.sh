@@ -10,18 +10,6 @@ show_details() {
     echo "Last Updated: Oct 15, 2024"
 }
 
-# Sudo
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script with sudo."
-    exit 1
-fi
-sudo -v
-while true; do 
-    sudo -n true
-    sleep 60
-    kill -0 "$$" || exit
-done 2>/dev/null &
-
 # Function to install packages from a file
 install_packages() {
     local package_file="$1"
@@ -118,9 +106,29 @@ case "$1" in
         clone_repository
         ;;
     -install)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -install."
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
         install_packages "$2"
         ;;
     -mysql)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -mysql."
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
         setup_mysql
         ;;
     *)
