@@ -270,6 +270,14 @@ case "$1" in
         chmod 755 apache2.sh
         setup_apache2
         ;;
+    -endgame)
+        ./intro.sh
+        sudo $0 -install-packages
+        sudo -u $USER $0 -git-clone
+        sudo $0 -mysql
+        sudo $0 -rabbitmq
+        sudo $0 -apache2
+        ;;
     *)
         echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq |-apache2 \n
 Run in order: \n
