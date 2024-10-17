@@ -201,7 +201,7 @@ setup_apache2() {
 setup_wireguard() {
     echo "Setting up Wireguard VPN..."
     read -p "Which user are you? mike | warlin | raj | jude : " person
-    # Check to see which user is who and assign a number
+    # Check to see which user is who and assign a number and copy their private keys
     case "$person" in
         mike)
             privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Mike)
@@ -339,7 +339,7 @@ case "$1" in
         ./outro.sh
         ;;
     *)
-        echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq |-apache2 \n
+        echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq | -apache2 | -wireguard \n
 Run in order: \n
 1. -install-packages\n
 2. -git-clone (no sudo)\n
