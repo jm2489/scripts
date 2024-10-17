@@ -182,7 +182,8 @@ setup_apache2() {
             echo "Exiting."
             exit 1
         fi
-        # # Ask user if they would like to load localhost/index.html now
+        # # Ask user if they would like to load localhost/index.html now.
+        # # Kinda buggy so I left it out for now.
         # read -p "Would you like to load localhost/index.html now? [y/n] " answer
         # if [[ "$answer" =~ ^[Yy]$ ]]; then
         #     sudo -u "$user" xdg-open http://localhost/index.html > /dev/null 2>&1 &
