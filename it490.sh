@@ -274,7 +274,7 @@ case "$1" in
         echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq |-apache2 \n
 Run in order: \n
 1. -install-packages\n
-2. -git-clone \n
+2. -git-clone (no sudo)\n
 3. -mysql \n
 4. -rabbitmq \n
 5. -apache2 \n"
