@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Insert a default user and hashed password into the users table
-INSERT INTO USERS (username,password)
+INSERT INTO users (username,password)
 VALUES ('steve', '$2y$10$iPNDJKXKUiT8OSYyXIACw.lTGJzD1CekSMfzW3o8k6yKWbyKHmLUq');
 
 -- Apply the changes immediately
