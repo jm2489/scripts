@@ -271,6 +271,16 @@ case "$1" in
         setup_apache2
         ;;
     -endgame)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -endgame"
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
         ./intro.sh
         sudo $0 -install-packages
         sudo -u $USER $0 -git-clone
