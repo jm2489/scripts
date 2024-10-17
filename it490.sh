@@ -200,7 +200,7 @@ setup_apache2() {
 # Will do later.. Really tired right now....
 setup_wireguard() {
     echo "Setting up Wireguard VPN..."
-    read -p "Which user are you? mike | warlin | raj | jude" person
+    read -p "Which user are you? mike | warlin | raj | jude : " person
     # Check to see which user is who and assign a number
     case "$person" in
         mike)
