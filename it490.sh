@@ -283,10 +283,15 @@ case "$1" in
         done 2>/dev/null &
         ./intro.sh
         sudo $0 -install-packages
+        sleep 3
         sudo -u $USER $0 -git-clone
+        sleep 3
         sudo $0 -mysql
+        sleep 3
         sudo $0 -rabbitmq
+        sleep 3
         sudo $0 -apache2
+        ./outro.sh
         ;;
     *)
         echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq |-apache2 \n
