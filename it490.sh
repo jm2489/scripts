@@ -217,15 +217,20 @@ setup_wireguard() {
             ;;
         jude)
             privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Jude)
-            vpn=5
+            vpn=6
             ;;
         *)
             echo "Invalid user. Exiting."
             exit 1
             ;;
     esac
-    sed -i "s|^Address.*|Address = 10.0.0.$vpn" NJIT/IT490/Wireguard/wg0.conf
+    sed -i "s|^PrivateKey.*|PrivateKey = $privatekey|" NJIT/IT490/Wireguard/wg0.conf
+    sed -i "s|^Address.*|Address = 10.0.0.$vpn|" NJIT/IT490/Wireguard/wg0.conf
     sudo cp NJIT/IT490/Wireguard/wg0.conf /etc/wireguard/wg0.conf
+    sudo systemctl enable wg-quick wg0
+    sudo systemctl start wg-quick wg0
+    sudo wg0 show
+    echo "Wireguard VPN setup complete."
 }
 
 
