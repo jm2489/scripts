@@ -182,15 +182,17 @@ setup_apache2() {
             echo "Exiting."
             exit 1
         fi
-        # Ask user if they would like to load localhost/index.html now
-        read -p "Would you like to load localhost/index.html now? [y/n] " answer
-        if [[ "$answer" =~ ^[Yy]$ ]]; then
-            sudo -u "$user" xdg-open http://localhost/index.html > /dev/null 2>&1 &
-            exit 0
-        else
-            echo "Open http://localhost/index.html in browser to view web page"
-            exit 1
-        fi
+        # # Ask user if they would like to load localhost/index.html now
+        # read -p "Would you like to load localhost/index.html now? [y/n] " answer
+        # if [[ "$answer" =~ ^[Yy]$ ]]; then
+        #     sudo -u "$user" xdg-open http://localhost/index.html > /dev/null 2>&1 &
+        #     exit 0
+        # else
+        #     echo "Open http://localhost/index.html in browser to view web page"
+        #     exit 0
+        # fi
+        echo "Open http://localhost/index.html in browser to view web page"
+        exit 0
     else
         echo "Failed to setup Apache2 server (exit code: $status)"
     fi
@@ -225,7 +227,7 @@ setup_wireguard() {
             ;;
     esac
 
-    # Need to make if statements to check if wireguard is down or there is an existing wg0.conf
+    # Need to make if statements to check if wireguard vpn server is up or there is an existing wg0.conf
     sed -i "s|^PrivateKey.*|PrivateKey = $privatekey|" NJIT/IT490/Wireguard/wg0.conf
     sed -i "s|^Address.*|Address = 10.0.0.$vpn|" NJIT/IT490/Wireguard/wg0.conf
     sudo cp NJIT/IT490/Wireguard/wg0.conf /etc/wireguard/wg0.conf
@@ -342,7 +344,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
-
+        setup_ufw
         ;;
     -endgame)
         if [ "$EUID" -ne 0 ]; then
