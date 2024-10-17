@@ -8,7 +8,7 @@ intro="Fine... I'll do it myself"
 # Loop through the string
 for (( i=0; i<${#intro}; i++ )); do
     echo -n "${intro:$i:1}"
-    sleep 0.2
+    sleep 0.1
 done
 echo -e "\n"
 exit 0
