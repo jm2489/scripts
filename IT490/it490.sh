@@ -130,19 +130,31 @@ setup_rabbitmq() {
     # After RabbitMQ was successfully configured. Set it up in systemd as a service
     # Very straightforward. Would probably need to do some checks if service of the same name exists and etc. This is fine for now.
     echo "Editing service file..."
-    sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php /home/$user/RabbitMQ/testRabbitMQServer.php|" /home/$user/RabbitMQ/testRabbitMQServer.service
-    sudo sed -i "s|^User=.*|User=$user|" /home/$user/RabbitMQ/testRabbitMQServer.service
-    sudo sed -i "s|^Group=.*|Group=$user|" /home/$user/RabbitMQ/testRabbitMQServer.service
+    configFile=/home/$user/RabbitMQ/testRabbitMQServer.service
+    serviceFile=/etc/systemd/system/testRabbitMQServer.service
+    if [ -f $serviceFile ]; then
+        echo "Service file already exists. Removing..."
+        sudo rm -f $serviceFile
+    fi
+    sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php /home/$user/RabbitMQ/testRabbitMQServer.php|" $configFile
+    sudo sed -i "s|^User=.*|User=$user|" $configFile
+    sudo sed -i "s|^Group=.*|Group=$user|" $configFile
+    
     echo "Creating service file in systemd..."
     sudo cp /home/$user/RabbitMQ/testRabbitMQServer.service /etc/systemd/system/
+    
     echo "Reloading daemon-service..."
     sudo systemctl daemon-reload
+    
     echo "Enabling service..."
     sudo systemctl enable testRabbitMQServer.service
+    
     echo "Starting service..."
     sudo systemctl start testRabbitMQServer.service
+    
     echo "Checking status..."
     sudo systemctl status testRabbitMQServer.service --no-pager
+    
     echo "RabbitMQ daemon service complete"
     echo "Done."
 }
@@ -254,6 +266,50 @@ setup_ufw() {
     echo "ufw rules setup complete."
 }
 
+# This function is mainly for connection information to each server for troubleshooting
+get_info() {
+    if [ -z "$1" ]; then
+        echo "Second argument is empty."
+        exit 0
+    else
+        case "$1" in
+            mysql)
+                echo "RabbitMQ >>>> MySQL"
+                cat ~/RabbitMQ/dbClient.php | awk 'NR>=3 && NR<=6'
+                ;;
+            rabbitmq)
+                echo "+++++ RabbitMQ server info on this machine +++++"
+                cat ~/RabbitMQ/testRabbitMQ.ini | awk 'NR>=2 && NR<=10'
+                echo
+                echo "+++++ RabbitMQ server service file +++++"
+                cat ~/RabbitMQ/testRabbitMQServer.service
+                ;;
+            apache)
+                echo "Apache2 >>>> RabbitMQ"
+                sudo cat /var/www/html/php/testRabbitMQ.ini
+                ;;
+            wireguard)
+                echo "Getting Wireguard VPN info:"
+                vpnInfo=$(sudo wg show)
+                if [ -z "$vpnInfo" ]; then
+                    echo "Wireguard VPN Disconnected..."
+                    echo "Run sudo wg-quick up wg0 to enable"
+                else
+                    echo "$vpnInfo"
+                fi
+                ;;
+            ufw)
+                echo "Getting ufw rules:"
+                firewallStatus=$(sudo ufw status)
+                echo "$firewallStatus"
+                ;;
+            *)
+                echo "Unknown argument: $1"
+                ;;
+        esac
+    fi
+}
+
 # Main
 case "$1" in
     -details)
@@ -347,6 +403,9 @@ case "$1" in
         done 2>/dev/null &
         setup_ufw
         ;;
+    -get)
+        get_info $2
+        ;;
     -endgame)
         if [ "$EUID" -ne 0 ]; then
             echo "Need sudo privileges to run -endgame"
@@ -373,12 +432,14 @@ case "$1" in
         ./outro.sh
         ;;
     *)
-        echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq | -apache2 | -wireguard \n
+        echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq | -apache2 | -ufw |-wireguard \n
 Run in order: \n
 1. -install-packages\n
 2. -git-clone (no sudo)\n
 3. -mysql \n
 4. -rabbitmq \n
-5. -apache2 \n"
+5. -apache2 \n
+6. -wireguard \n
+7. -ufw \n"
         ;;
 esac
