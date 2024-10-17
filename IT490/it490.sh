@@ -433,7 +433,12 @@ case "$1" in
         ;;
     *)
         echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq | -apache2 | -ufw |-wireguard \n
-Run in order: \n
+To get server information:  -get (mysql | rabbitmq | apache | wireguard | ufw)
+
+If running from fresh Ubuntu install:
+
+==== Run in order ====
+
 1. -install-packages\n
 2. -git-clone (no sudo)\n
 3. -mysql \n
@@ -441,5 +446,6 @@ Run in order: \n
 5. -apache2 \n
 6. -wireguard \n
 7. -ufw \n"
+        ./it490.sh -details
         ;;
 esac
