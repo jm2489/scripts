@@ -1,7 +1,8 @@
 #!/usr/bin/bash
 
-# Adding it490.sh to alias in bashrc with the current working directory
+# Adding it490.sh in bashrc with the current working directory
 # This is so that the script can be run from anywhere
+# Functions work but alias is different when working with sudo
 add_alias() {
     # Check to see what is the default shell
     if [ -z "$SHELL" ]; then
@@ -11,12 +12,12 @@ add_alias() {
     # If using bash put in .bashrc if zsh put in .zshrc
     if [[ "$SHELL" == "/bin/bash" ]]; then
         echo "Adding alias to .bashrc ..."
-        echo "alias it490='bash $PWD/it490.sh'" >> ~/.bashrc
+        echo "it490() {$PWD/it490.sh}" >> ~/.bashrc
         source ~/.bashrc
         echo "Alias added."
     elif [[ "$SHELL" == "/bin/zsh" ]]; then
         echo "Adding alias to .zshrc ..."
-        echo "alias it490='bash $PWD/it490.sh'" >> ~/.zshrc
+        echo "it490() {$PWD/it490.sh}" >> ~/.zshrc
         source ~/.zshrc
         echo "Alias added."
     else
