@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "IT490 project setup complete"
+echo -e "\n"
 intro="I... AM... INEVITABLE"
 
 for (( i=0; i<${#intro}; i++ )); do
