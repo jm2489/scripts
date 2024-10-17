@@ -360,8 +360,6 @@ case "$1" in
         ./intro.sh
         sudo $0 -install-packages
         sleep 3
-        sudo -u $USER $0 -git-clone
-        sleep 3
         sudo $0 -mysql
         sleep 3
         sudo $0 -rabbitmq
