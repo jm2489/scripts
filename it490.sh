@@ -238,6 +238,18 @@ setup_wireguard() {
     echo "Use sudo wg-quick down wg0 to disable wireguard"
 }
 
+# Setup ufw rules for required apps
+setup_ufw() {
+    sudo ufw allow 22/tcp
+    sudo ufw allow 80/tcp
+    sudo ufw allow 443/tcp
+    sudo ufw allow 3306/tcp
+    # sudo ufw allow 15672/tcp Rabbitmq web interface
+    sudo ufw allow 5672/tcp
+    sudo ufw enable
+    sudo ufw status
+    echo "UFW setup complete."
+}
 
 # Main
 case "$1" in
@@ -319,6 +331,19 @@ case "$1" in
         done 2>/dev/null &
         setup_wireguard
         ;;
+    -ufw)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -ufw."
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
+
+        ;;
     -endgame)
         if [ "$EUID" -ne 0 ]; then
             echo "Need sudo privileges to run -endgame"
@@ -342,6 +367,8 @@ case "$1" in
         sudo $0 -apache2
         sleep 3
         sudo $0 -wireguard
+        sleep 3
+        sudo $0 -ufw
         ./outro.sh
         ;;
     *)
