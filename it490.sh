@@ -99,9 +99,9 @@ EOF
 setup_rabbitmq() {
 
     echo "Setting up RabbitMQ ..."
-    # sudo ./rabbitmq.sh
-    # status=$?
-    status=0 # testing purposes
+    sudo ./rabbitmq.sh
+    status=$?
+    # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d NJIT ]; then
@@ -131,6 +131,8 @@ setup_rabbitmq() {
     # Very straightforward. Would probably need to do some checks if service of the same name exists and etc. This is fine for now.
     echo "Editing service file..."
     sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php /home/$user/RabbitMQ/testRabbitMQServer.php|" /home/$user/RabbitMQ/testRabbitMQServer.service
+    sudo sed -i "s|^User=.*|User=$user|" /home/$user/RabbitMQ/testRabbitMQServer.service
+    sudo sed -i "s|^Group=.*|Group=$user|" /home/$user/RabbitMQ/testRabbitMQServer.service
     echo "Creating service file in systemd..."
     sudo cp /home/$user/RabbitMQ/testRabbitMQServer.service /etc/systemd/system/
     echo "Reloading daemon-service..."
@@ -149,9 +151,9 @@ setup_rabbitmq() {
 # Third infinity stone... The kidney stone.
 setup_apache2() {
     echo "Setting up apache2"
-    # sudo ./apache2.sh
-    # status=$?
-    status=0 # testing purposes
+    sudo ./apache2.sh
+    status=$?
+    # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d NJIT ]; then
@@ -196,9 +198,9 @@ setup_apache2() {
 
 # Setup Wireguard VPN
 # Will do later.. Really tired right now....
-setup_wireguard() {
+# setup_wireguard() {
 
-}
+# }
 
 
 # Main
@@ -269,6 +271,12 @@ case "$1" in
         setup_apache2
         ;;
     *)
-        echo "Usage: $0 -details | -git-clone | -mysql | -install-packages | -apache2 "
+        echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq |-apache2 \n
+Run in order: \n
+1. -install-packages\n
+2. -git-clone \n
+3. -mysql \n
+4. -rabbitmq \n
+5. -apache2 \n"
         ;;
 esac
