@@ -7,7 +7,7 @@ show_details() {
     echo "             Because I'm tired of having to be like Thanos and say, 'Fine, I'll do this myself.'"
     echo "Author: Judrianne Mahigne (jm2489@njit.edu)"
     echo "Version: 1.00"
-    echo "Last Updated: Oct 16, 2024"
+    echo "Last Updated: Oct 17, 2024"
 }
 
 # Function to install packages from a file
@@ -224,14 +224,18 @@ setup_wireguard() {
             exit 1
             ;;
     esac
+
+    # Need to make if statements to check if wireguard is down or there is an existing wg0.conf
     sed -i "s|^PrivateKey.*|PrivateKey = $privatekey|" NJIT/IT490/Wireguard/wg0.conf
     sed -i "s|^Address.*|Address = 10.0.0.$vpn|" NJIT/IT490/Wireguard/wg0.conf
     sudo cp NJIT/IT490/Wireguard/wg0.conf /etc/wireguard/wg0.conf
     sudo chmod 600 /etc/wireguard/wg0.conf
     sudo wg-quick up wg0
-    sleep 2
+    echo "Connecting to wireguard VPN..."
+    sleep 3
     sudo wg show
     echo "Wireguard VPN setup complete."
+    echo "Use sudo wg-quick down wg0 to disable wireguard"
 }
 
 
@@ -336,6 +340,8 @@ case "$1" in
         sudo $0 -rabbitmq
         sleep 3
         sudo $0 -apache2
+        sleep 3
+        sudo $0 -wireguard
         ./outro.sh
         ;;
     *)
