@@ -227,8 +227,9 @@ setup_wireguard() {
     sed -i "s|^PrivateKey.*|PrivateKey = $privatekey|" NJIT/IT490/Wireguard/wg0.conf
     sed -i "s|^Address.*|Address = 10.0.0.$vpn|" NJIT/IT490/Wireguard/wg0.conf
     sudo cp NJIT/IT490/Wireguard/wg0.conf /etc/wireguard/wg0.conf
-    sudo systemctl enable wg-quick wg0
-    sudo systemctl start wg-quick wg0
+    sudo chmod 600 /etc/wireguard/wg0.conf
+    sudo wg-quick up wg0
+    sudo wg-quick down wg0
     sudo wg0 show
     echo "Wireguard VPN setup complete."
 }
