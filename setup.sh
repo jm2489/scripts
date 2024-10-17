@@ -12,12 +12,16 @@ add_alias() {
     # If using bash put in .bashrc if zsh put in .zshrc
     if [[ "$SHELL" == "/bin/bash" ]]; then
         echo "Adding alias to .bashrc ..."
-        echo "it490() {$PWD/it490.sh}" >> ~/.bashrc
+        echo "it490() {" >> ~/.bashrc 
+        echo "  $PWD/it490.sh "$@"" >> ~/.bashrc
+        echo "}" >> ~/.bashrc
         source ~/.bashrc
         echo "Alias added."
     elif [[ "$SHELL" == "/bin/zsh" ]]; then
         echo "Adding alias to .zshrc ..."
-        echo "it490() {$PWD/it490.sh}" >> ~/.zshrc
+        echo "it490() {" >> ~/.bashrc 
+        echo "  $PWD/it490.sh "$@"" >> ~/.bashrc
+        echo "}" >> ~/.bashrc
         source ~/.zshrc
         echo "Alias added."
     else
