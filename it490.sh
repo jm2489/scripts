@@ -250,7 +250,7 @@ setup_ufw() {
     sudo ufw allow 5672/tcp
     sudo ufw enable
     sudo ufw status
-    echo "UFW setup complete."
+    echo "ufw rules setup complete."
 }
 
 # Main
