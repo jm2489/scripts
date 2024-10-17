@@ -198,9 +198,35 @@ setup_apache2() {
 
 # Setup Wireguard VPN
 # Will do later.. Really tired right now....
-# setup_wireguard() {
-
-# }
+setup_wireguard() {
+    echo "Setting up Wireguard VPN..."
+    read -p "Which user are you? mike | warlin | raj | jude" person
+    # Check to see which user is who and assign a number
+    case "$person" in
+        mike)
+            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Mike)
+            vpn=2
+            ;;
+        warlin)
+            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Warlin)
+            vpn=3
+            ;;
+        raj)
+            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Raj)
+            vpn=4
+            ;;
+        jude)
+            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Jude)
+            vpn=5
+            ;;
+        *)
+            echo "Invalid user. Exiting."
+            exit 1
+            ;;
+    esac
+    sed -i "s|^Address.*|Address = 10.0.0.$vpn" NJIT/IT490/Wireguard/wg0.conf
+    sudo cp NJIT/IT490/Wireguard/wg0.conf /etc/wireguard/wg0.conf
+}
 
 
 # Main
@@ -269,6 +295,19 @@ case "$1" in
         done 2>/dev/null &
         chmod 755 apache2.sh
         setup_apache2
+        ;;
+    -wireguard)
+        if [ "$EUID" -ne 0 ]; then
+            echo "Need sudo privileges to run -wireguard."
+            exit 1
+        fi
+        sudo -v
+        while true; do 
+            sudo -n true
+            sleep 60
+            kill -0 "$$" || exit
+        done 2>/dev/null &
+        setup_wireguard
         ;;
     -endgame)
         if [ "$EUID" -ne 0 ]; then
