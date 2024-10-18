@@ -1,5 +1,5 @@
 -- Create a new MySQL user with access from any IP
-CREATE USER 'rabbit'@'%' IDENTIFIED BY 'rabbitIT490!';
+CREATE USER IF NOT EXISTS 'rabbit'@'%' IDENTIFIED BY 'rabbitIT490!';
 
 -- Grant all privileges to the user on the logindb database
 GRANT ALL PRIVILEGES ON logindb.* TO 'rabbit'@'%' WITH GRANT OPTION;
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT NOT NULL AUTO_INCREMENT,
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    last_login TIMESTAMP NULL,
+    last_login BIGINT NULL,
     PRIMARY KEY (id)
 );
 

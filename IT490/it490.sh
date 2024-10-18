@@ -1,14 +1,7 @@
 #!/bin/bash
 
-# Function to display the details of this wonderfully curated script!
-show_details() {
-    echo "Script Name: it490.sh"
-    echo "Description: This is my infinity gauntlet script to setup the IT490 project from a fresh Ubuntu installation."
-    echo "             Because I'm tired of having to be like Thanos and say, 'Fine, I'll do this myself.'"
-    echo "Author: Judrianne Mahigne (jm2489@njit.edu)"
-    echo "Version: 1.00"
-    echo "Last Updated: Oct 17, 2024"
-}
+# # Get the current path for this script
+CURRENT_DIR=$(dirname "$(readlink -f "$0")")
 
 # Function to install packages from a file
 install_packages() {
@@ -57,6 +50,19 @@ setup_mysql() {
 
     echo "Setting up MySQL ..."
 
+    # if [ -d /var/lib/mysql ]; then
+    #     echo "MySQL already installed."
+    #     echo "Stopping MySQL..."
+    #     sudo systemctl stop mysql
+    #     read -p "Would you like to overwrite existing MySQL data? [y/n] " answer
+    #     if [[ "$answer" =~ ^[Yy]$ ]]; then
+    #         echo "Removing existing MySQL data..."
+    #         sudo rm -rf /var/lib/mysql/*
+    #         sudo mysqld --initialize --user=mysql --datadir=/var/lib/mysql
+
+    #     fi
+    # fi
+
     # Modify the MySQL bind-address to allow connections from any IP in the /etc/mysql/mysqld.cnf
     echo "Configuring MySQL bind-address..."
     sudo sed -i "s/^bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
@@ -99,7 +105,7 @@ EOF
 setup_rabbitmq() {
 
     echo "Setting up RabbitMQ ..."
-    sudo ./rabbitmq.sh
+    sudo $CURRENT_DIR/rabbitmq.sh
     status=$?
     # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
@@ -113,15 +119,15 @@ setup_rabbitmq() {
         if [ -d /home/$user/RabbitMQ ]; then
             read -p "Script will overwrite directory /home/$user/RabbitMQ.. Do you want to continue? [y/n] " answer
             if [[ "$answer" =~ ^[Yy]$ ]]; then
-                sudo rm -rf /hom/$user/RabbitMQ
-                sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
+                sudo rm -rf /home/$user/RabbitMQ
+                sudo -u $user cp -r $CURRENT_DIR/NJIT/IT490/RabbitMQ /home/$user/
                 echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
             else
                 echo "Exiting."
                 exit 1
             fi
         else
-            sudo -u $user cp -r NJIT/IT490/RabbitMQ /home/$user/
+            sudo -u $user cp -r $CURRENT_DIR/NJIT/IT490/RabbitMQ /home/$user/
             echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
         fi
     else
@@ -211,6 +217,16 @@ setup_apache2() {
     fi
 }
 
+# Function to display the details of this wonderfully curated script!
+show_details() {
+    echo "Script Name: it490.sh"
+    echo "Description: This is my infinity gauntlet script to setup the IT490 project from a fresh Ubuntu installation."
+    echo "             Because I'm tired of having to be like Thanos and say, 'Fine, I'll do this myself.'"
+    echo "Author: Judrianne Mahigne (jm2489@njit.edu)"
+    echo "Version: 1.00"
+    echo "Last Updated: Oct 17, 2024"
+}
+
 # Setup Wireguard VPN
 # Will do later.. Really tired right now....
 setup_wireguard() {
@@ -268,25 +284,61 @@ setup_ufw() {
 
 # This function is mainly for connection information to each server for troubleshooting
 get_info() {
-    if [ -z "$1" ]; then
+    if [ -z "$2" ]; then
         echo "Second argument is empty."
         exit 0
     else
-        case "$1" in
+        case "$2" in
             mysql)
-                echo "RabbitMQ >>>> MySQL"
-                cat ~/RabbitMQ/dbClient.php | awk 'NR>=3 && NR<=6'
+                if [ -z "$3" ]; then
+                    echo "+++++ MySQL server connection info +++++"
+                    filePath=$(realpath ~/RabbitMQ/dbClient.php)
+                    echo "File path: $filePath"
+                    cat $filePath | awk 'NR>=3 && NR<=6'
+                else
+                    if [[ "$3" == "users" ]]; then
+                        case "$4" in
+                            readable)
+                                echo "+++++ MySQL server users table info +++++"
+                                mysql --defaults-file=client.cnf -e 'select id, username, password, STR_TO_DATE(last_login, "%Y%m%d%H%i%s") as last_login_readable from users;' logindb
+                                exit 0
+                                ;;
+                            raw)
+                                echo "+++++ MySQL server users table info +++++"
+                                mysql --defaults-file=client.cnf -e 'select * from users;' logindb
+                                exit 0
+                                ;;
+                            *)
+                                echo "Using default query"
+                                echo "+++++ MySQL server users table info +++++"
+                                mysql --defaults-file=client.cnf -e 'select id, username, password, UNIX_TIMESTAMP(STR_TO_DATE(last_login, "%Y%m%d%H%i%s")) as EPOCH from users;' logindb
+                                ;;
+                        esac
+                    else
+                        echo "Unknown table '$3' or does not exist! Please ensure correct table name."
+                        exit 1
+                    fi
+                fi
                 ;;
             rabbitmq)
                 echo "+++++ RabbitMQ server info on this machine +++++"
-                cat ~/RabbitMQ/testRabbitMQ.ini | awk 'NR>=2 && NR<=10'
+                rabbitmq_dir=~/RabbitMQ
+                filePath1="$rabbitmq_dir/dbClient.php"
+                filePath2="$rabbitmq_dir/testRabbitMQ.ini"
+                
+                echo "File path: $(realpath "$filePath1")"
+                awk 'NR>=2 && NR<=10' "$filePath1"
+                
                 echo
                 echo "+++++ RabbitMQ server service file +++++"
-                cat ~/RabbitMQ/testRabbitMQServer.service
+                echo "File path: $(realpath "$filePath2")"
+                cat "$filePath2"
                 ;;
             apache)
-                echo "Apache2 >>>> RabbitMQ"
-                sudo cat /var/www/html/php/testRabbitMQ.ini
+                echo "+++++ Apache server connection info +++++"
+                filePath=$(realpath /var/www/html/php/testRabbitMQ.ini)
+                echo "File path: $filePath"
+                sudo cat $filePath
                 ;;
             wireguard)
                 echo "Getting Wireguard VPN info:"
@@ -304,7 +356,7 @@ get_info() {
                 echo "$firewallStatus"
                 ;;
             *)
-                echo "Unknown argument: $1"
+                echo "Unknown argument: $2"
                 ;;
         esac
     fi
@@ -404,7 +456,7 @@ case "$1" in
         setup_ufw
         ;;
     -get)
-        get_info $2
+        get_info $@
         ;;
     -endgame)
         if [ "$EUID" -ne 0 ]; then
@@ -432,20 +484,6 @@ case "$1" in
         ./outro.sh
         ;;
     *)
-        echo -e "Usage: $0 -details | -git-clone | -install-packages | -mysql | -rabbitmq | -apache2 | -ufw |-wireguard \n
-To get server information:  -get (mysql | rabbitmq | apache | wireguard | ufw)
-
-If running from fresh Ubuntu install:
-
-==== Run in order ====
-
-1. -install-packages\n
-2. -git-clone (no sudo)\n
-3. -mysql \n
-4. -rabbitmq \n
-5. -apache2 \n
-6. -wireguard \n
-7. -ufw \n"
-        ./it490.sh -details
+        cat $CURRENT_DIR/README.md
         ;;
 esac
