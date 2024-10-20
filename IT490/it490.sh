@@ -314,6 +314,19 @@ get_info() {
                                 mysql --defaults-file=client.cnf -e 'select id, username, password, UNIX_TIMESTAMP(STR_TO_DATE(last_login, "%Y%m%d%H%i%s")) as EPOCH from users;' logindb
                                 ;;
                         esac
+                    elif [[ "$3" == "sessions" ]]; then
+                        case "$4" in
+                            readable)
+                                echo "+++++ MySQL server sessions table info +++++"
+                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, UNIX_TIMESTAMP(STR_TO_DATE(expire_date, "%Y%m%d%H%i%s")) as expire_date_readable from sessions;' logindb
+                                exit 0
+                                ;;
+                            *)
+                                echo "Using default query"
+                                echo "+++++ MySQL server sessions table info +++++"
+                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, expire_date as EPOCH from sessions;' logindb
+                                ;;
+                        esac
                     else
                         echo "Unknown table '$3' or does not exist! Please ensure correct table name."
                         exit 1
