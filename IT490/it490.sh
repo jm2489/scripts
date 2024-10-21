@@ -328,7 +328,7 @@ get_info() {
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, created_at, expire_date from sessions;' logindb
+                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, created_at, FROM_UNIXTIME(expire_date) from sessions;' logindb
                                 ;;
                         esac
                     else
