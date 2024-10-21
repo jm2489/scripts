@@ -300,7 +300,7 @@ get_info() {
                         case "$4" in
                             readable)
                                 echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, password, STR_TO_DATE(last_login, "%Y%m%d%H%i%s") as last_login_readable from users;' logindb
+                                mysql --defaults-file=client.cnf -e 'select id, username, password, STR_TO_DATE(last_login, "%Y%m%d%H%i%s") as last_login from users;' logindb
                                 exit 0
                                 ;;
                             raw)
@@ -318,13 +318,13 @@ get_info() {
                         case "$4" in
                             readable)
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, UNIX_TIMESTAMP(STR_TO_DATE(expire_date, "%Y%m%d%H%i%s")) as expire_date_readable from sessions;' logindb
+                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
                                 exit 0
                                 ;;
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, expire_date as EPOCH from sessions;' logindb
+                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, created_at, expire_date from sessions;' logindb
                                 ;;
                         esac
                     else
