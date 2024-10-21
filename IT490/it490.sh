@@ -307,15 +307,10 @@ get_info() {
                                 mysql --defaults-file=client.cnf -e 'select id, username, password, STR_TO_DATE(last_login, "%Y%m%d%H%i%s") as last_login from users;' logindb
                                 exit 0
                                 ;;
-                            raw)
-                                echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select * from users;' logindb
-                                exit 0
-                                ;;
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, password, UNIX_TIMESTAMP(STR_TO_DATE(last_login, "%Y%m%d%H%i%s")) as EPOCH from users;' logindb
+                                mysql --defaults-file=client.cnf -e 'select id, username, password, last_login as EPOCH from users;' logindb
                                 ;;
                         esac
                     elif [[ "$3" == "sessions" ]]; then
@@ -328,7 +323,7 @@ get_info() {
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, created_at, FROM_UNIXTIME(expire_date) from sessions;' logindb
+                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, created_at, expire_date from sessions;' logindb
                                 ;;
                         esac
                     else
