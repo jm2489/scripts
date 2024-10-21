@@ -165,8 +165,9 @@ setup_rabbitmq() {
     sudo systemctl status testRabbitMQServer.service --no-pager
     
     echo "RabbitMQ daemon service complete"
+    # Set log permissions because it contains sensitive information...
+    sudo -u $user chmod 600 received_messages.log
     echo "Done."
-    sudo rm -rf NJIT
     exit 0
 }
 
@@ -216,7 +217,6 @@ setup_apache2() {
         #     exit 0
         # fi
         echo "Open http://localhost/index.html in browser to view web page"
-        sudo rm -rf NJIT
         exit 0
     else
         echo "Failed to setup Apache2 server (exit code: $status)"
@@ -237,6 +237,13 @@ show_details() {
 # Will do later.. Really tired right now....
 setup_wireguard() {
     echo "Setting up Wireguard VPN..."
+    user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+    if [ ! -d NJIT ]; then
+        sudo -u $user $0 -git-clone
+    else
+        echo "Directory NJIT already exists!"
+        echo "Skipping git clone..."
+    fi
     read -p "Which user are you? mike | warlin | raj | jude : " person
     # Check to see which user is who and assign a number and copy their private keys
     case "$person" in
