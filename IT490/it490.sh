@@ -96,6 +96,7 @@ EOF
     mysql --defaults-file=client.cnf -e 'show databases;'
     mysql --defaults-file=client.cnf -e 'show tables;' logindb
     mysql --defaults-file=client.cnf -e 'desc users' logindb
+    mysql --defaults-file=client.cnf -e 'desc sessions' logindb
     echo "Login info: User: rabbit Password: rabbitIT490!"
     echo "MySQL setup complete"
 }
