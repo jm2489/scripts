@@ -508,7 +508,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
-        ./intro.sh
+        ./.intro.sh
         sudo $0 -install-packages
         sleep 3
         sudo $0 -mysql
@@ -520,7 +520,7 @@ case "$1" in
         sudo $0 -wireguard
         sleep 3
         sudo $0 -ufw
-        ./outro.sh
+        ./.outro.sh
         ;;
     *)
         cat $CURRENT_DIR/README.md
