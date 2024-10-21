@@ -163,6 +163,8 @@ setup_rabbitmq() {
     
     echo "RabbitMQ daemon service complete"
     echo "Done."
+    sudo rm -rf NJIT
+    exit 0
 }
 
 # Setup apache2
@@ -211,6 +213,7 @@ setup_apache2() {
         #     exit 0
         # fi
         echo "Open http://localhost/index.html in browser to view web page"
+        sudo rm -rf NJIT
         exit 0
     else
         echo "Failed to setup Apache2 server (exit code: $status)"
