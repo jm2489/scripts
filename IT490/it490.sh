@@ -331,7 +331,7 @@ get_info() {
                         case "$4" in
                             readable)
                                 echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, FROM_UNIXTIME(last_login, "%Y%m%d%H%i%s") as last_login from users;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, FROM_UNIXTIME(last_login) as last_login from users;' logindb
                                 exit 0
                                 ;;
                             *)
