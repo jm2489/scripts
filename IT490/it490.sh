@@ -8,6 +8,8 @@ install_packages() {
 
     package_file="packageList"
 
+    sudo apt update
+
     if [ ! -f "$package_file" ]; then
         echo "Error: Package file packageList not found:"
         exit 1
