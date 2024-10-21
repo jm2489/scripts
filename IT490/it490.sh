@@ -6,7 +6,7 @@ CURRENT_DIR=$(dirname "$(readlink -f "$0")")
 # Function to install packages from a file
 install_packages() {
 
-    package_file="packageList"
+    package_file="$CURRENT_DIR/packageList"
 
     sudo apt update
 
@@ -30,21 +30,32 @@ install_packages() {
 # Clone repository function
 clone_repository() {
 
-    githubRepos="githubRepos"
+    githubRepos="$CURRENT_DIR/githubRepos"
     
-    if [ ! -f "$githubRepos" ]; then
+    if [ ! -e "$githubRepos" ]; then
         echo "Error: File githubRepos not found."
         exit 1
     fi
 
     while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
-        git clone "$repo_url" || {
+        
+        repo_name=$(basename "$repo_url" .git)
+        repo_dir="$CURRENT_DIR/$repo_name"
+        if [[ -z "$repo_url" ]]; then
+            continue
+        fi
+       
+        git clone "$repo_url" "$repo_dir" || {
             echo "Failed to clone $repo_url"
+            echo "repo_dir: $repo_dir"
+            echo "repo_name: $repo_name"
             continue
         }
+        
         echo "$repo_name cloned successfully."
     done < "$githubRepos"
 }
+
 
 # Function to set up MySQL
 # The first infinity stone. LOL
@@ -52,18 +63,17 @@ setup_mysql() {
 
     echo "Setting up MySQL ..."
 
-    # if [ -d /var/lib/mysql ]; then
-    #     echo "MySQL already installed."
-    #     echo "Stopping MySQL..."
-    #     sudo systemctl stop mysql
-    #     read -p "Would you like to overwrite existing MySQL data? [y/n] " answer
-    #     if [[ "$answer" =~ ^[Yy]$ ]]; then
-    #         echo "Removing existing MySQL data..."
-    #         sudo rm -rf /var/lib/mysql/*
-    #         sudo mysqld --initialize --user=mysql --datadir=/var/lib/mysql
-
-    #     fi
-    # fi
+    # Delete existing logindb if it exists
+    if [ -d /var/lib/mysql/logindb ]; then
+        read -p "Script will overwrite logindb database.. Do you want to continue? [y/n] " answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            echo "Deleting existing logindb..."
+            sudo rm -rf /var/lib/mysql/logindb
+        else
+            echo "Exiting."
+            exit 1
+        fi
+    fi
 
     # Modify the MySQL bind-address to allow connections from any IP in the /etc/mysql/mysqld.cnf
     echo "Configuring MySQL bind-address..."
@@ -95,10 +105,10 @@ EOF
 
     echo "MySQL configuration completed successfully."
     echo "Showing databse and tables:"
-    mysql --defaults-file=client.cnf -e 'show databases;'
-    mysql --defaults-file=client.cnf -e 'show tables;' logindb
-    mysql --defaults-file=client.cnf -e 'desc users' logindb
-    mysql --defaults-file=client.cnf -e 'desc sessions' logindb
+    mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'show databases;'
+    mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'show tables;' logindb
+    mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'desc users' logindb
+    mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'desc sessions' logindb
     echo "Login info: User: rabbit Password: rabbitIT490!"
     echo "MySQL setup complete"
 }
@@ -108,6 +118,12 @@ EOF
 setup_rabbitmq() {
 
     echo "Setting up RabbitMQ ..."
+    # Check to see if RabbitMQ is installed
+    if ! dpkg -l | grep -q "^ii  rabbitmq-server "; then
+        echo "RabbitMQ server not installed."
+        echo "Please run 'sudo it490 -install-packages' first!"
+        exit 1
+    fi
     sudo $CURRENT_DIR/rabbitmq.sh
     status=$?
     # status=0 # testing purposes
@@ -135,6 +151,7 @@ setup_rabbitmq() {
         fi
     else
         echo "Failed to setup RabbitMQ server (exit code: $status)"
+        exit 1
     fi
     # After RabbitMQ was successfully configured. Set it up in systemd as a service
     # Very straightforward. Would probably need to do some checks if service of the same name exists and etc. This is fine for now.
@@ -166,6 +183,7 @@ setup_rabbitmq() {
     
     echo "RabbitMQ daemon service complete"
     # Set log permissions because it contains sensitive information...
+    # Will probably update this to something more secure.
     sudo -u $user chmod 600 received_messages.log
     echo "Done."
     exit 0
@@ -175,7 +193,7 @@ setup_rabbitmq() {
 # Third infinity stone... The kidney stone.
 setup_apache2() {
     echo "Setting up apache2"
-    sudo ./apache2.sh
+    sudo $CURRENT_DIR/apache2.sh
     status=$?
     # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
@@ -229,21 +247,14 @@ show_details() {
     echo "Description: This is my infinity gauntlet script to setup the IT490 project from a fresh Ubuntu installation."
     echo "             Because I'm tired of having to be like Thanos and say, 'Fine, I'll do this myself.'"
     echo "Author: Judrianne Mahigne (jm2489@njit.edu)"
-    echo "Version: 1.00"
-    echo "Last Updated: Oct 17, 2024"
+    echo "Version: 1.10"
+    echo "Last Updated: Oct 21, 2024"
 }
 
 # Setup Wireguard VPN
 # Will do later.. Really tired right now....
 setup_wireguard() {
     echo "Setting up Wireguard VPN..."
-    user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-    if [ ! -d NJIT ]; then
-        sudo -u $user $0 -git-clone
-    else
-        echo "Directory NJIT already exists!"
-        echo "Skipping git clone..."
-    fi
     read -p "Which user are you? mike | warlin | raj | jude : " person
     # Check to see which user is who and assign a number and copy their private keys
     case "$person" in
@@ -268,7 +279,14 @@ setup_wireguard() {
             exit 1
             ;;
     esac
-
+    # Checking to see if NJIT directory exists to pull wireguard information
+    user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+    if [ ! -d NJIT ]; then
+        sudo -u $user $0 -git-clone
+    else
+        echo "Directory NJIT already exists!"
+        echo "Skipping git clone..."
+    fi
     # Need to make if statements to check if wireguard vpn server is up or there is an existing wg0.conf
     sed -i "s|^PrivateKey.*|PrivateKey = $privatekey|" NJIT/IT490/Wireguard/wg0.conf
     sed -i "s|^Address.*|Address = 10.0.0.$vpn|" NJIT/IT490/Wireguard/wg0.conf
@@ -313,26 +331,26 @@ get_info() {
                         case "$4" in
                             readable)
                                 echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, password, STR_TO_DATE(last_login, "%Y%m%d%H%i%s") as last_login from users;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, STR_TO_DATE(last_login, "%Y%m%d%H%i%s") as last_login from users;' logindb
                                 exit 0
                                 ;;
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, password, last_login as EPOCH from users;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, last_login as EPOCH from users;' logindb
                                 ;;
                         esac
                     elif [[ "$3" == "sessions" ]]; then
                         case "$4" in
                             readable)
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
                                 exit 0
                                 ;;
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=client.cnf -e 'select id, username, session_token, created_at, expire_date from sessions;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, session_token, created_at, expire_date from sessions;' logindb
                                 ;;
                         esac
                     else

@@ -1,13 +1,16 @@
 #!/bin/bash
 
+# Set current directory as global variable
+CURRENT_DIR=$(dirname "$(readlink -f "$0")")
+
 # Check to see if .env file exist
 # Load variables from the .env file
-if [ ! -f rabbitMQClient.env ]; then
+if [ ! -f $CURRENT_DIR/rabbitMQClient.env ]; then
     echo "Error: rabbitMQClient.env not found."
     exit 1
 fi
 
-source rabbitMQClient.env
+source $CURRENT_DIR/rabbitMQClient.env
 
 # Enable and start rabbitmq-server
 systemctl enable rabbitmq-server
