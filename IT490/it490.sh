@@ -129,25 +129,26 @@ setup_rabbitmq() {
     # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-        if [ ! -d NJIT ]; then
+        rabbitMQ_DIR="/home/$user/RabbitMQ"
+        if [ ! -d $CURRENT_DIR/NJIT ]; then
             sudo -u $user $0 -git-clone
         else
             echo "Directory NJIT already exists!"
             echo "Skipping git clone..."
         fi
-        if [ -d /home/$user/RabbitMQ ]; then
+        if [ -d $rabbitMQ_DIR ]; then
             read -p "Script will overwrite directory /home/$user/RabbitMQ.. Do you want to continue? [y/n] " answer
             if [[ "$answer" =~ ^[Yy]$ ]]; then
-                sudo rm -rf /home/$user/RabbitMQ
+                sudo rm -rf $rabbitMQ_DIR
                 sudo -u $user cp -r $CURRENT_DIR/NJIT/IT490/RabbitMQ /home/$user/
-                echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
+                echo "Copied RabbitMQ directory to $rabbitMQ_DIR"
             else
                 echo "Exiting."
                 exit 1
             fi
         else
             sudo -u $user cp -r $CURRENT_DIR/NJIT/IT490/RabbitMQ /home/$user/
-            echo "Copied RabbitMQ directory to /home/$user/RabbitMQ"
+            echo "Copied RabbitMQ directory to $rabbitMQ_DIR"
         fi
     else
         echo "Failed to setup RabbitMQ server (exit code: $status)"
@@ -156,18 +157,18 @@ setup_rabbitmq() {
     # After RabbitMQ was successfully configured. Set it up in systemd as a service
     # Very straightforward. Would probably need to do some checks if service of the same name exists and etc. This is fine for now.
     echo "Editing service file..."
-    configFile=/home/$user/RabbitMQ/testRabbitMQServer.service
+    configFile=$rabbitMQ_DIR/testRabbitMQServer.service
     serviceFile=/etc/systemd/system/testRabbitMQServer.service
     if [ -f $serviceFile ]; then
         echo "Service file already exists. Removing..."
         sudo rm -f $serviceFile
     fi
-    sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php /home/$user/RabbitMQ/testRabbitMQServer.php|" $configFile
+    sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php $rabbitMQ_DIR/testRabbitMQServer.php|" $configFile
     sudo sed -i "s|^User=.*|User=$user|" $configFile
     sudo sed -i "s|^Group=.*|Group=$user|" $configFile
     
     echo "Creating service file in systemd..."
-    sudo cp /home/$user/RabbitMQ/testRabbitMQServer.service /etc/systemd/system/
+    sudo cp $rabbitMQ_DIR/testRabbitMQServer.service /etc/systemd/system/
     
     echo "Reloading daemon-service..."
     sudo systemctl daemon-reload
@@ -184,7 +185,7 @@ setup_rabbitmq() {
     echo "RabbitMQ daemon service complete"
     # Set log permissions because it contains sensitive information...
     # Will probably update this to something more secure.
-    sudo -u $user chmod 600 received_messages.log
+    sudo -u $user chmod 600 $rabbitMQ_DIR/received_messages.log
     echo "Done."
     exit 0
 }
@@ -451,7 +452,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
-        chmod 755 rabbitmq.sh
+        chmod 755 $CURRENT_DIR/rabbitmq.sh
         setup_rabbitmq
         ;;
     -apache2)
@@ -465,7 +466,7 @@ case "$1" in
             sleep 60
             kill -0 "$$" || exit
         done 2>/dev/null &
-        chmod 755 apache2.sh
+        chmod 755 $CURRENT_DIR/apache2.sh
         setup_apache2
         ;;
     -wireguard)
