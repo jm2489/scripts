@@ -31,7 +31,7 @@ systemctl restart rabbitmq-server
 # Using direct API calls to rabbitmq management
 # This Grabs the api information overview of rabbitmq web management interface
 # Pipe it to the jq command to make the output look pretty for user readability
-# Although, it requires the jq command to be installed so I won't include that here.
+# Although, it requires the jq command to be installed....
 echo "RabbitMQ API overview"
 curl -u "$USER":"$PASSWORD" -X GET http://localhost:15672/api/overview | jq
 

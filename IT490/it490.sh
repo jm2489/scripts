@@ -58,7 +58,7 @@ clone_repository() {
 
 
 # Function to set up MySQL
-# The first infinity stone. LOL
+# The first infinity stone.
 setup_mysql() {
 
     echo "Setting up MySQL ..."
@@ -105,9 +105,13 @@ EOF
 
     echo "MySQL configuration completed successfully."
     echo "Showing databse and tables:"
+    echo "--Databases--"
     mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'show databases;'
+    echo "--Tables--"
     mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'show tables;' logindb
+    echo "--Table: users"
     mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'desc users' logindb
+    echo "--Table: sessions"
     mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'desc sessions' logindb
     echo "Login info: User: rabbit Password: rabbitIT490!"
     echo "MySQL setup complete"
@@ -129,7 +133,7 @@ setup_rabbitmq() {
     # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-        if [ ! -d NJIT ]; then
+        if [ ! -d $CURRENT_DIR/NJIT ]; then
             sudo -u $user $0 -git-clone
         else
             echo "Directory NJIT already exists!"
@@ -184,7 +188,7 @@ setup_rabbitmq() {
     echo "RabbitMQ daemon service complete"
     # Set log permissions because it contains sensitive information...
     # Will probably update this to something more secure.
-    sudo -u $user chmod 600 received_messages.log
+    sudo -u $user chmod 600 /home/$user/RabbitMQ/received_messages.log
     echo "Done."
     exit 0
 }
@@ -198,7 +202,7 @@ setup_apache2() {
     # status=0 # testing purposes
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-        if [ ! -d NJIT ]; then
+        if [ ! -d $CURRENT_DIR/NJIT ]; then
             sudo -u $user $0 -git-clone
         else
             echo "Directory NJIT already exists!"
@@ -337,20 +341,20 @@ get_info() {
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, last_login as EPOCH from users;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, last_login as "last_login(EPOCH)" from users;' logindb
                                 ;;
                         esac
                     elif [[ "$3" == "sessions" ]]; then
                         case "$4" in
                             readable)
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
                                 exit 0
                                 ;;
                             *)
                                 echo "Using default query"
                                 echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, session_token, created_at, expire_date from sessions;' logindb
+                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, created_at as "created_at(EPOCH)", expire_date as "expire_at(EPOCH)" from sessions;' logindb
                                 ;;
                         esac
                     else
@@ -360,21 +364,29 @@ get_info() {
                 fi
                 ;;
             rabbitmq)
-                echo "+++++ RabbitMQ server info on this machine +++++"
                 rabbitmq_dir=~/RabbitMQ
                 filePath1="$rabbitmq_dir/dbClient.php"
                 filePath2="$rabbitmq_dir/testRabbitMQ.ini"
-                
+                filePath3="$rabbitmq_dir/testRabbitMQServer.php"
+                filePath4="$rabbitmq_dir/testRabbitMQServer.service"
+                echo "+++++ RabbitMQ server to MySQL database connection +++++"
                 echo "File path: $(realpath "$filePath1")"
                 awk 'NR>=2 && NR<=10' "$filePath1"
-                
                 echo
-                echo "+++++ RabbitMQ server service file +++++"
+                echo "+++++ This machine's RabbitMQ server connection details +++++"
                 echo "File path: $(realpath "$filePath2")"
                 cat "$filePath2"
+                echo "+++++ RabbitMQ server PHP file +++++"
+                echo "File path: $(realpath "$filePath3")"
+                echo
+                echo "+++++ RabbitMQ server systemd service file +++++"
+                echo "File path: $(realpath "$filePath4")"
+                echo "BEGIN"
+                cat "$filePath4"
+                echo "END"
                 ;;
             apache)
-                echo "+++++ Apache server connection info +++++"
+                echo "+++++ Apache server to RabbitMQ server connection +++++"
                 filePath=$(realpath /var/www/html/php/testRabbitMQ.ini)
                 echo "File path: $filePath"
                 sudo cat $filePath
@@ -396,6 +408,50 @@ get_info() {
                 ;;
             *)
                 echo "Unknown argument: $2"
+                ;;
+        esac
+    fi
+}
+
+# Set information or variables
+set_info() {
+    if [ -z "$2" ]; then
+        echo "Second argument is empty."
+        exit 0
+    else
+        case "$2" in
+            mysql)
+                if [ -z "$3" ]; then
+                    echo "Third argument is empty."
+                    exit 0
+                else
+                    case "$3" in
+                        sessions)
+                            if [ -z "$4" ]; then
+                                echo "Fourth argument is empty."
+                                exit 0
+                            else
+                                if [[ "$4" == "reset" ]]; then
+                                    echo "Resetting sessions table..."
+                                    mysql --defaults-file=$CURRENT_DIR/client.cnf -e "truncate table sessions;" logindb
+                                    echo "Sessions table reset."
+                                    exit 0
+                                else
+                                    echo "Unknown argument: $4"
+                                    exit 1
+                                fi
+                            fi
+                            ;;
+                        *)
+                            echo "Unknown argument: $3"
+                            exit 1
+                            ;;
+                    esac
+                fi
+                ;;
+            *)
+                echo "Unknown argument: $2"
+                exit 1
                 ;;
         esac
     fi
@@ -496,6 +552,9 @@ case "$1" in
         ;;
     -get)
         get_info $@
+        ;;
+    -set)
+        set_info $@
         ;;
     -endgame)
         if [ "$EUID" -ne 0 ]; then

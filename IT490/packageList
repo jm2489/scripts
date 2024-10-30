@@ -4,6 +4,7 @@ curl
 mysql-server
 rabbitmq-server
 php-amqp
+php-curl
 php-mysql
 apache2
 php8.3
