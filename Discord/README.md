@@ -1,0 +1,1 @@
+I created a script to export chat logs just to cover my ass in case the IT490 group does not pan out.
