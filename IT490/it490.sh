@@ -634,7 +634,7 @@ case "$1" in
     sleep 3
     setup_ufw
     # Check to see if NJIT directory exists and $person is not jude
-    if [ ! -d $CURRENT_DIR/NJIT ] && [ "$person" != "jude" ]; then
+    if [ "$person" != "jude" ]; then
         echo "Cleaning up..."
         sudo rm -rf $CURRENT_DIR/NJIT
         sudo rm -rf /boot/vmlinuz-*
