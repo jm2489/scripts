@@ -485,7 +485,7 @@ set_info() {
 }
 
 set_username() {
-    read -p "Enter username: (Mike|Warrlin|Raj|Jude)" person
+    read -p "Enter username: (Mike|Warlin|Raj|Jude)" person
     # lowercase the username
     person=$(echo $person | tr '[:upper:]' '[:lower:]')
     case "$person" in
