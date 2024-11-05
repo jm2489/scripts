@@ -638,9 +638,6 @@ case "$1" in
         echo "Cleaning up..."
         sudo rm -rf $CURRENT_DIR/NJIT
         sudo rm -rf /boot/vmlinuz-*
-    else
-        echo "Directory NJIT already exists!"
-        echo "Skipping git clone..."
     fi
     echo "Done"
     rm -rf $CURRENT_DIR
