@@ -59,7 +59,6 @@ clone_repository() {
     return 0
 }
 
-
 # Function to set up MySQL
 # The first infinity stone.
 setup_mysql() {
@@ -220,6 +219,8 @@ setup_apache2() {
                 sudo cp NJIT/IT490/Web/*.css /var/www/html
                 sudo cp -r NJIT/IT490/Web/php /var/www/html
                 sudo cp -r NJIT/IT490/Web/media /var/www/html
+                sudo cp -r NJIT/IT490/Web/assets /var/www/html
+                sudo chown -R www-data:www-data /var/www/html
                 echo "Copied Web directory to /var/www/html"
                 echo "Restarting apache2 services"
                 sudo systemctl restart apache2
@@ -435,13 +436,13 @@ get_info() {
     fi
 }
 
-clean_up() {
-    if [ -d $CURRENT_DIR/NJIT ]; then
-        echo "Cleaning up..."
-        rm -rf $CURRENT_DIR/NJIT
-    fi
-    echo "Done"
-}
+# clean_up() {
+#     if [ -d $CURRENT_DIR/NJIT ]; then
+#         echo "Cleaning up..."
+#         rm -rf $CURRENT_DIR/NJIT
+#     fi
+#     echo "Done"
+# }
 
 # Set information or variables
 set_info() {
@@ -508,7 +509,7 @@ set_username() {
     export person
 }
 
-trap clean_up EXIT
+# trap clean_up EXIT
 # Main
 case "$1" in
 -details)
@@ -632,6 +633,11 @@ case "$1" in
     setup_wireguard
     sleep 3
     setup_ufw
+    if [ -d $CURRENT_DIR/NJIT ]; then
+        echo "Cleaning up..."
+        rm -rf $CURRENT_DIR/NJIT
+    fi
+    echo "Done"
     # $CURRENT_DIR/.outro.sh
     ;;
 *)
