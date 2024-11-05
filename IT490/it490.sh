@@ -58,6 +58,7 @@ clone_repository() {
 
         # Clone the repository
         git clone "$authenticated_url" "$repo_dir" || {
+            echo $authenticated_url
             echo "Failed to clone $repo_url"
             echo "repo_dir: $repo_dir"
             echo "repo_name: $repo_name"
