@@ -202,7 +202,6 @@ setup_rabbitmq() {
     # Will probably update this to something more secure.
     sudo -u $user chmod 600 $rabbitMQ_DIR/received_messages.log
     echo "Done."
-    exit 0
 }
 
 # Setup apache2
@@ -241,7 +240,6 @@ setup_apache2() {
             exit 1
         fi
         echo "Open http://localhost/index.html in browser to view web page"
-        exit 0
     else
         echo "Failed to setup Apache2 server (exit code: $status)"
     fi
@@ -369,7 +367,6 @@ get_info() {
                     readable)
                         echo "+++++ MySQL server users table info +++++"
                         mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, FROM_UNIXTIME(last_login) as last_login from users;' logindb
-                        exit 0
                         ;;
                     *)
                         echo "Using default query"
@@ -382,7 +379,6 @@ get_info() {
                     readable)
                         echo "+++++ MySQL server sessions table info +++++"
                         mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
-                        exit 0
                         ;;
                     *)
                         echo "Using default query"
@@ -458,25 +454,21 @@ clean_up() {
 set_info() {
     if [ -z "$2" ]; then
         echo "Second argument is empty."
-        exit 0
     else
         case "$2" in
         mysql)
             if [ -z "$3" ]; then
                 echo "Third argument is empty."
-                exit 0
             else
                 case "$3" in
                 sessions)
                     if [ -z "$4" ]; then
                         echo "Fourth argument is empty."
-                        exit 0
                     else
                         if [[ "$4" == "reset" ]]; then
                             echo "Resetting sessions table..."
                             mysql --defaults-file=$CURRENT_DIR/client.cnf -e "truncate table sessions;" logindb
                             echo "Sessions table reset."
-                            exit 0
                         else
                             echo "Unknown argument: $4"
                             exit 1
@@ -638,15 +630,15 @@ case "$1" in
     set_username
     sudo $0 -install-packages
     sleep 3
-    sudo $0 -mysql
+    setup_mysql
     sleep 3
-    sudo $0 -rabbitmq
+    setup_rabbitmq
     sleep 3
-    sudo $0 -apache2
+    setup_apache2
     sleep 3
-    sudo $0 -wireguard
+    setup_wireguard
     sleep 3
-    sudo $0 -ufw
+    setup_ufw
     # $CURRENT_DIR/.outro.sh
     ;;
 *)
