@@ -29,23 +29,34 @@ install_packages() {
 
 # Clone repository function
 clone_repository() {
-
     githubRepos="$CURRENT_DIR/githubRepos"
     
+    # Check if githubRepos file exists
     if [ ! -e "$githubRepos" ]; then
         echo "Error: File githubRepos not found."
         exit 1
     fi
 
+    # Load the personal access token from the git_token file
+    if [ ! -e "$CURRENT_DIR/git_token" ]; then
+        echo "Error: File git_token not found."
+        exit 1
+    fi
+    git_token=$(<"$CURRENT_DIR/git_token")
+
     while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
-        
         repo_name=$(basename "$repo_url" .git)
         repo_dir="$CURRENT_DIR/$repo_name"
+        
+        # Skip if repo_url is empty
         if [[ -z "$repo_url" ]]; then
             continue
         fi
-       
-        git clone "$repo_url" "$repo_dir" || {
+
+        # Insert token into the repo URL
+        authenticated_url="${repo_url/https:\/\/github.com/https://$git_token@github.com}"
+
+        git clone "$authenticated_url" "$repo_dir" || {
             echo "Failed to clone $repo_url"
             echo "repo_dir: $repo_dir"
             echo "repo_name: $repo_name"
@@ -54,6 +65,7 @@ clone_repository() {
         
         echo "$repo_name cloned successfully."
     done < "$githubRepos"
+    return 0
 }
 
 
@@ -204,7 +216,7 @@ setup_apache2() {
     if [ "$status" -eq 0 ]; then
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         if [ ! -d $CURRENT_DIR/NJIT ]; then
-            sudo -u $user $0 -git-clone
+            clone_repository
         else
             echo "Directory NJIT already exists!"
             echo "Skipping git clone..."
@@ -229,16 +241,6 @@ setup_apache2() {
             echo "Exiting."
             exit 1
         fi
-        # # Ask user if they would like to load localhost/index.html now.
-        # # Kinda buggy so I left it out for now.
-        # read -p "Would you like to load localhost/index.html now? [y/n] " answer
-        # if [[ "$answer" =~ ^[Yy]$ ]]; then
-        #     sudo -u "$user" xdg-open http://localhost/index.html > /dev/null 2>&1 &
-        #     exit 0
-        # else
-        #     echo "Open http://localhost/index.html in browser to view web page"
-        #     exit 0
-        # fi
         echo "Open http://localhost/index.html in browser to view web page"
         exit 0
     else
@@ -414,6 +416,14 @@ get_info() {
     fi
 }
 
+clean_up() {
+    echo "Cleaning up..."
+    if [ -d $CURRENT_DIR/NJIT ]; then
+        rm -rf $CURRENT_DIR/NJIT
+    fi
+    echo "Done"
+}
+
 # Set information or variables
 set_info() {
     if [ -z "$2" ]; then
@@ -458,6 +468,7 @@ set_info() {
     fi
 }
 
+trap clean_up EXIT
 # Main
 case "$1" in
     -details)
