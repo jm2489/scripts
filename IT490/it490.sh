@@ -53,9 +53,10 @@ clone_repository() {
             continue
         fi
 
-        # Insert token into the repo URL
-        authenticated_url="${repo_url/https:\/\/github.com/https://$git_token@github.com}"
+        # Construct authenticated URL
+        authenticated_url="https://$git_token@github.com/${repo_url#https://github.com/}"
 
+        # Clone the repository
         git clone "$authenticated_url" "$repo_dir" || {
             echo "Failed to clone $repo_url"
             echo "repo_dir: $repo_dir"
@@ -67,6 +68,7 @@ clone_repository() {
     done <"$githubRepos"
     return 0
 }
+
 
 # Function to set up MySQL
 # The first infinity stone.
