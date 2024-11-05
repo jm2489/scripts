@@ -309,22 +309,22 @@ setup_ufw() {
     fi
     case "$person" in
     mike)
-        sudo ufw allow 80/tcp
-        sudo ufw allow 443/tcp
+        sudo ufw allow 80
+        sudo ufw allow 443
         sudo ufw enable
         sudo ufw status
         echo "ufw rules setup complete."
         ;;
     warlin)
-        sudo ufw allow 80/tcp
-        sudo ufw allow 443/tcp
+        sudo ufw allow 80
+        sudo ufw allow 443
         sudo ufw enable
         sudo ufw status
         echo "ufw rules setup complete."
         ;;
     raj)
-        sudo ufw allow from 10.0.0.0/24 to any port 15672/tcp
-        sudo ufw allow from 10.0.0.0/24 to any port 5672/tcp
+        sudo ufw allow from 10.0.0.0/24 to any port 15672
+        sudo ufw allow from 10.0.0.0/24 to any port 5672
         sudo ufw enable
         sudo ufw status
         echo "ufw rules setup complete."
