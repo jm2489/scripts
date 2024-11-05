@@ -216,7 +216,8 @@ setup_apache2() {
             if [[ "$answer" =~ ^[Yy]$ ]]; then
                 sudo rm -rf /var/www/html
                 sudo mkdir /var/www/html
-                sudo cp NJIT/IT490/Web/index.html /var/www/html
+                sudo cp NJIT/IT490/Web/*.html /var/www/html
+                sudo cp NJIT/IT490/Web/*.css /var/www/html
                 sudo cp -r NJIT/IT490/Web/php /var/www/html
                 sudo cp -r NJIT/IT490/Web/media /var/www/html
                 echo "Copied Web directory to /var/www/html"
