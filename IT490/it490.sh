@@ -2,6 +2,7 @@
 
 # # Get the current path for this script
 CURRENT_DIR=$(dirname "$(readlink -f "$0")")
+user=""
 
 # Function to install packages from a file
 install_packages() {
@@ -22,15 +23,14 @@ install_packages() {
         else
             echo "$package is already installed."
         fi
-    done < "$package_file"
+    done <"$package_file"
     echo "All packages installed."
 }
-
 
 # Clone repository function
 clone_repository() {
     githubRepos="$CURRENT_DIR/githubRepos"
-    
+
     # Check if githubRepos file exists
     if [ ! -e "$githubRepos" ]; then
         echo "Error: File githubRepos not found."
@@ -47,7 +47,7 @@ clone_repository() {
     while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
         repo_name=$(basename "$repo_url" .git)
         repo_dir="$CURRENT_DIR/$repo_name"
-        
+
         # Skip if repo_url is empty
         if [[ -z "$repo_url" ]]; then
             continue
@@ -62,12 +62,11 @@ clone_repository() {
             echo "repo_name: $repo_name"
             continue
         }
-        
+
         echo "$repo_name cloned successfully."
-    done < "$githubRepos"
+    done <"$githubRepos"
     return 0
 }
-
 
 # Function to set up MySQL
 # The first infinity stone.
@@ -97,7 +96,7 @@ setup_mysql() {
 
     if [ -f mysql_setup.sql ]; then
         echo "Running MySQL configuration from mysql_setup.sql..."
-        sudo mysql < mysql_setup.sql
+        sudo mysql <mysql_setup.sql
     else
         echo "Error: mysql_setup.sql not found."
         exit 1
@@ -147,7 +146,7 @@ setup_rabbitmq() {
         user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
         rabbitMQ_DIR="/home/$user/RabbitMQ"
         if [ ! -d $CURRENT_DIR/NJIT ]; then
-            sudo -u $user $0 -git-clone
+            clone_repository
         else
             echo "Directory NJIT already exists!"
             echo "Skipping git clone..."
@@ -182,22 +181,22 @@ setup_rabbitmq() {
     sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/php $rabbitMQ_DIR/testRabbitMQServer.php|" $configFile
     sudo sed -i "s|^User=.*|User=$user|" $configFile
     sudo sed -i "s|^Group=.*|Group=$user|" $configFile
-    
+
     echo "Creating service file in systemd..."
     sudo cp $rabbitMQ_DIR/testRabbitMQServer.service /etc/systemd/system/
-    
+
     echo "Reloading daemon-service..."
     sudo systemctl daemon-reload
-    
+
     echo "Enabling service..."
     sudo systemctl enable testRabbitMQServer.service
-    
+
     echo "Starting service..."
     sudo systemctl start testRabbitMQServer.service
-    
+
     echo "Checking status..."
     sudo systemctl status testRabbitMQServer.service --no-pager
-    
+
     echo "RabbitMQ daemon service complete"
     # Set log permissions because it contains sensitive information...
     # Will probably update this to something more secure.
@@ -262,38 +261,40 @@ show_details() {
 # Will do later.. Really tired right now....
 setup_wireguard() {
     echo "Setting up Wireguard VPN..."
-    read -p "Which user are you? mike | warlin | raj | jude : " person
-    # Check to see which user is who and assign a number and copy their private keys
-    case "$person" in
-        mike)
-            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Mike)
-            vpn=2
-            ;;
-        warlin)
-            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Warlin)
-            vpn=3
-            ;;
-        raj)
-            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Raj)
-            vpn=4
-            ;;
-        jude)
-            privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Jude)
-            vpn=6
-            ;;
-        *)
-            echo "Invalid user. Exiting."
-            exit 1
-            ;;
-    esac
-    # Checking to see if NJIT directory exists to pull wireguard information
-    user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+    if [ -z "$person" ]; then
+        set_username
+    fi
     if [ ! -d NJIT ]; then
-        sudo -u $user $0 -git-clone
+        clone_repository
     else
         echo "Directory NJIT already exists!"
         echo "Skipping git clone..."
     fi
+    # Check to see which user is who and assign a number and copy their private keys
+    case "$person" in
+    mike)
+        privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Mike)
+        vpn=2
+        ;;
+    warlin)
+        privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Warlin)
+        vpn=3
+        ;;
+    raj)
+        privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Raj)
+        vpn=4
+        ;;
+    jude)
+        privatekey=$(cat NJIT/IT490/Wireguard/privkeys/Jude)
+        vpn=6
+        ;;
+    *)
+        echo "Invalid user. Exiting."
+        exit 1
+        ;;
+    esac
+    # Checking to see if NJIT directory exists to pull wireguard information
+    user=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
     # Need to make if statements to check if wireguard vpn server is up or there is an existing wg0.conf
     sed -i "s|^PrivateKey.*|PrivateKey = $privatekey|" NJIT/IT490/Wireguard/wg0.conf
     sed -i "s|^Address.*|Address = 10.0.0.$vpn|" NJIT/IT490/Wireguard/wg0.conf
@@ -309,15 +310,44 @@ setup_wireguard() {
 
 # Setup ufw rules for required apps
 setup_ufw() {
-    sudo ufw allow 22/tcp
-    sudo ufw allow 80/tcp
-    sudo ufw allow 443/tcp
-    sudo ufw allow 3306/tcp
-    # sudo ufw allow 15672/tcp Rabbitmq web interface
-    sudo ufw allow 5672/tcp
-    sudo ufw enable
-    sudo ufw status
-    echo "ufw rules setup complete."
+    # Setup firewall rules for cerrtain users
+    echo "y" | sudo ufw reset
+    if [ -z "$person" ]; then
+        set_username
+    fi
+    case "$person" in
+    mike)
+        sudo ufw allow 80/tcp
+        sudo ufw allow 443/tcp
+        sudo ufw enable
+        sudo ufw status
+        echo "ufw rules setup complete."
+        ;;
+    warlin)
+        sudo ufw allow 80/tcp
+        sudo ufw allow 443/tcp
+        sudo ufw enable
+        sudo ufw status
+        echo "ufw rules setup complete."
+        ;;
+    raj)
+        sudo ufw allow from 10.0.0.0/24 to any port 15672/tcp
+        sudo ufw allow from 10.0.0.0/24 to any port 5672/tcp
+        sudo ufw enable
+        sudo ufw status
+        echo "ufw rules setup complete."
+        ;;
+    jude)
+        sudo ufw allow from 10.0.0.0/24 to any port 3306
+        sudo ufw enable
+        sudo ufw status
+        echo "ufw rules setup complete."
+        ;;
+    *)
+        echo "Invalid user. Exiting."
+        exit 1
+        ;;
+    esac
 }
 
 # This function is mainly for connection information to each server for troubleshooting
@@ -327,98 +357,98 @@ get_info() {
         exit 0
     else
         case "$2" in
-            mysql)
-                if [ -z "$3" ]; then
-                    echo "+++++ MySQL server connection info +++++"
-                    filePath=$(realpath ~/RabbitMQ/dbClient.php)
-                    echo "File path: $filePath"
-                    cat $filePath | awk 'NR>=3 && NR<=6'
-                else
-                    if [[ "$3" == "users" ]]; then
-                        case "$4" in
-                            readable)
-                                echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, FROM_UNIXTIME(last_login) as last_login from users;' logindb
-                                exit 0
-                                ;;
-                            *)
-                                echo "Using default query"
-                                echo "+++++ MySQL server users table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, last_login as "last_login(EPOCH)" from users;' logindb
-                                ;;
-                        esac
-                    elif [[ "$3" == "sessions" ]]; then
-                        case "$4" in
-                            readable)
-                                echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
-                                exit 0
-                                ;;
-                            *)
-                                echo "Using default query"
-                                echo "+++++ MySQL server sessions table info +++++"
-                                mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, created_at as "created_at(EPOCH)", expire_date as "expire_at(EPOCH)" from sessions;' logindb
-                                ;;
-                        esac
-                    else
-                        echo "Unknown table '$3' or does not exist! Please ensure correct table name."
-                        exit 1
-                    fi
-                fi
-                ;;
-            rabbitmq)
-                rabbitmq_dir=~/RabbitMQ
-                filePath1="$rabbitmq_dir/dbClient.php"
-                filePath2="$rabbitmq_dir/testRabbitMQ.ini"
-                filePath3="$rabbitmq_dir/testRabbitMQServer.php"
-                filePath4="$rabbitmq_dir/testRabbitMQServer.service"
-                echo "+++++ RabbitMQ server to MySQL database connection +++++"
-                echo "File path: $(realpath "$filePath1")"
-                awk 'NR>=2 && NR<=10' "$filePath1"
-                echo
-                echo "+++++ This machine's RabbitMQ server connection details +++++"
-                echo "File path: $(realpath "$filePath2")"
-                cat "$filePath2"
-                echo "+++++ RabbitMQ server PHP file +++++"
-                echo "File path: $(realpath "$filePath3")"
-                echo
-                echo "+++++ RabbitMQ server systemd service file +++++"
-                echo "File path: $(realpath "$filePath4")"
-                echo "BEGIN"
-                cat "$filePath4"
-                echo "END"
-                ;;
-            apache)
-                echo "+++++ Apache server to RabbitMQ server connection +++++"
-                filePath=$(realpath /var/www/html/php/testRabbitMQ.ini)
+        mysql)
+            if [ -z "$3" ]; then
+                echo "+++++ MySQL server connection info +++++"
+                filePath=$(realpath ~/RabbitMQ/dbClient.php)
                 echo "File path: $filePath"
-                sudo cat $filePath
-                ;;
-            wireguard)
-                echo "Getting Wireguard VPN info:"
-                vpnInfo=$(sudo wg show)
-                if [ -z "$vpnInfo" ]; then
-                    echo "Wireguard VPN Disconnected..."
-                    echo "Run sudo wg-quick up wg0 to enable"
+                cat $filePath | awk 'NR>=3 && NR<=6'
+            else
+                if [[ "$3" == "users" ]]; then
+                    case "$4" in
+                    readable)
+                        echo "+++++ MySQL server users table info +++++"
+                        mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, FROM_UNIXTIME(last_login) as last_login from users;' logindb
+                        exit 0
+                        ;;
+                    *)
+                        echo "Using default query"
+                        echo "+++++ MySQL server users table info +++++"
+                        mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select id, username, password, last_login as "last_login(EPOCH)" from users;' logindb
+                        ;;
+                    esac
+                elif [[ "$3" == "sessions" ]]; then
+                    case "$4" in
+                    readable)
+                        echo "+++++ MySQL server sessions table info +++++"
+                        mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, FROM_UNIXTIME(created_at) as created_at, FROM_UNIXTIME(expire_date) as expire_date from sessions;' logindb
+                        exit 0
+                        ;;
+                    *)
+                        echo "Using default query"
+                        echo "+++++ MySQL server sessions table info +++++"
+                        mysql --defaults-file=$CURRENT_DIR/client.cnf -e 'select username, session_token, created_at as "created_at(EPOCH)", expire_date as "expire_at(EPOCH)" from sessions;' logindb
+                        ;;
+                    esac
                 else
-                    echo "$vpnInfo"
+                    echo "Unknown table '$3' or does not exist! Please ensure correct table name."
+                    exit 1
                 fi
-                ;;
-            ufw)
-                echo "Getting ufw rules:"
-                firewallStatus=$(sudo ufw status)
-                echo "$firewallStatus"
-                ;;
-            *)
-                echo "Unknown argument: $2"
-                ;;
+            fi
+            ;;
+        rabbitmq)
+            rabbitmq_dir=~/RabbitMQ
+            filePath1="$rabbitmq_dir/dbClient.php"
+            filePath2="$rabbitmq_dir/testRabbitMQ.ini"
+            filePath3="$rabbitmq_dir/testRabbitMQServer.php"
+            filePath4="$rabbitmq_dir/testRabbitMQServer.service"
+            echo "+++++ RabbitMQ server to MySQL database connection +++++"
+            echo "File path: $(realpath "$filePath1")"
+            awk 'NR>=2 && NR<=10' "$filePath1"
+            echo
+            echo "+++++ This machine's RabbitMQ server connection details +++++"
+            echo "File path: $(realpath "$filePath2")"
+            cat "$filePath2"
+            echo "+++++ RabbitMQ server PHP file +++++"
+            echo "File path: $(realpath "$filePath3")"
+            echo
+            echo "+++++ RabbitMQ server systemd service file +++++"
+            echo "File path: $(realpath "$filePath4")"
+            echo "BEGIN"
+            cat "$filePath4"
+            echo "END"
+            ;;
+        apache)
+            echo "+++++ Apache server to RabbitMQ server connection +++++"
+            filePath=$(realpath /var/www/html/php/testRabbitMQ.ini)
+            echo "File path: $filePath"
+            sudo cat $filePath
+            ;;
+        wireguard)
+            echo "Getting Wireguard VPN info:"
+            vpnInfo=$(sudo wg show)
+            if [ -z "$vpnInfo" ]; then
+                echo "Wireguard VPN Disconnected..."
+                echo "Run sudo wg-quick up wg0 to enable"
+            else
+                echo "$vpnInfo"
+            fi
+            ;;
+        ufw)
+            echo "Getting ufw rules:"
+            firewallStatus=$(sudo ufw status)
+            echo "$firewallStatus"
+            ;;
+        *)
+            echo "Unknown argument: $2"
+            ;;
         esac
     fi
 }
 
 clean_up() {
-    echo "Cleaning up..."
     if [ -d $CURRENT_DIR/NJIT ]; then
+        echo "Cleaning up..."
         rm -rf $CURRENT_DIR/NJIT
     fi
     echo "Done"
@@ -431,169 +461,195 @@ set_info() {
         exit 0
     else
         case "$2" in
-            mysql)
-                if [ -z "$3" ]; then
-                    echo "Third argument is empty."
-                    exit 0
-                else
-                    case "$3" in
-                        sessions)
-                            if [ -z "$4" ]; then
-                                echo "Fourth argument is empty."
-                                exit 0
-                            else
-                                if [[ "$4" == "reset" ]]; then
-                                    echo "Resetting sessions table..."
-                                    mysql --defaults-file=$CURRENT_DIR/client.cnf -e "truncate table sessions;" logindb
-                                    echo "Sessions table reset."
-                                    exit 0
-                                else
-                                    echo "Unknown argument: $4"
-                                    exit 1
-                                fi
-                            fi
-                            ;;
-                        *)
-                            echo "Unknown argument: $3"
+        mysql)
+            if [ -z "$3" ]; then
+                echo "Third argument is empty."
+                exit 0
+            else
+                case "$3" in
+                sessions)
+                    if [ -z "$4" ]; then
+                        echo "Fourth argument is empty."
+                        exit 0
+                    else
+                        if [[ "$4" == "reset" ]]; then
+                            echo "Resetting sessions table..."
+                            mysql --defaults-file=$CURRENT_DIR/client.cnf -e "truncate table sessions;" logindb
+                            echo "Sessions table reset."
+                            exit 0
+                        else
+                            echo "Unknown argument: $4"
                             exit 1
-                            ;;
-                    esac
-                fi
-                ;;
-            *)
-                echo "Unknown argument: $2"
-                exit 1
-                ;;
+                        fi
+                    fi
+                    ;;
+                *)
+                    echo "Unknown argument: $3"
+                    exit 1
+                    ;;
+                esac
+            fi
+            ;;
+        *)
+            echo "Unknown argument: $2"
+            exit 1
+            ;;
         esac
     fi
+}
+
+set_username() {
+    read -p "Enter username: (Mike|Warrlin|Raj|Jude)" person
+    # lowercase the username
+    person=$(echo $person | tr '[:upper:]' '[:lower:]')
+    case "$person" in
+    mike)
+        echo "User: Mike"
+        ;;
+    warlin)
+        echo "User: Warlin"
+        ;;
+    raj)
+        echo "User: Raj"
+        ;;
+    jude)
+        echo "User: Jude"
+        ;;
+    *)
+        echo "Invalid user. Exiting."
+        exit 1
+        ;;
+    esac
+    export person
 }
 
 trap clean_up EXIT
 # Main
 case "$1" in
-    -details)
-        show_details
-        ;;
-    -git-clone)
-        if [ "$EUID" -eq 0 ]; then
-            echo "Detected running with sudo privileges."
-            echo "Please run this -git-clone as a regular user to avoid issues."
-            exit 1
-        fi
-        clone_repository
-        ;;
-    -install-packages)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -install."
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        install_packages
-        ;;
-    -mysql)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -mysql."
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        setup_mysql
-        ;;
-    -rabbitmq)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -rabbitmq."
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        chmod 755 $CURRENT_DIR/rabbitmq.sh
-        setup_rabbitmq
-        ;;
-    -apache2)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -apache2."
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        chmod 755 $CURRENT_DIR/apache2.sh
-        setup_apache2
-        ;;
-    -wireguard)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -wireguard."
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        setup_wireguard
-        ;;
-    -ufw)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -ufw."
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        setup_ufw
-        ;;
-    -get)
-        get_info $@
-        ;;
-    -set)
-        set_info $@
-        ;;
-    -endgame)
-        if [ "$EUID" -ne 0 ]; then
-            echo "Need sudo privileges to run -endgame"
-            exit 1
-        fi
-        sudo -v
-        while true; do 
-            sudo -n true
-            sleep 60
-            kill -0 "$$" || exit
-        done 2>/dev/null &
-        $CURRENT_DIR/.intro.sh
-        sudo $0 -install-packages
-        sleep 3
-        sudo $0 -mysql
-        sleep 3
-        sudo $0 -rabbitmq
-        sleep 3
-        sudo $0 -apache2
-        sleep 3
-        sudo $0 -wireguard
-        sleep 3
-        sudo $0 -ufw
-        $CURRENT_DIR/.outro.sh
-        ;;
-    *)
-        cat $CURRENT_DIR/README.md
-        ;;
+-details)
+    show_details
+    ;;
+-git-clone)
+    if [ "$EUID" -eq 0 ]; then
+        echo "Detected running with sudo privileges."
+        echo "Please run this -git-clone as a regular user to avoid issues."
+        exit 1
+    fi
+    clone_repository
+    ;;
+-install-packages)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -install."
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    install_packages
+    ;;
+-mysql)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -mysql."
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    setup_mysql
+    ;;
+-rabbitmq)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -rabbitmq."
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    chmod 755 $CURRENT_DIR/rabbitmq.sh
+    setup_rabbitmq
+    ;;
+-apache2)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -apache2."
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    chmod 755 $CURRENT_DIR/apache2.sh
+    setup_apache2
+    ;;
+-wireguard)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -wireguard."
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    setup_wireguard
+    ;;
+-ufw)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -ufw."
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    setup_ufw
+    ;;
+-get)
+    get_info $@
+    ;;
+-set)
+    set_info $@
+    ;;
+-endgame)
+    if [ "$EUID" -ne 0 ]; then
+        echo "Need sudo privileges to run -endgame"
+        exit 1
+    fi
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    # $CURRENT_DIR/.intro.sh
+    set_username
+    sudo $0 -install-packages
+    sleep 3
+    sudo $0 -mysql
+    sleep 3
+    sudo $0 -rabbitmq
+    sleep 3
+    sudo $0 -apache2
+    sleep 3
+    sudo $0 -wireguard
+    sleep 3
+    sudo $0 -ufw
+    # $CURRENT_DIR/.outro.sh
+    ;;
+*)
+    cat $CURRENT_DIR/README.md
+    ;;
 esac

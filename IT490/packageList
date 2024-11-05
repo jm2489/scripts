@@ -9,3 +9,10 @@ php-mysql
 apache2
 php8.3
 wireguard
+secure-delete
+python3
+python3-dotenv
+php-cli 
+php-json 
+php-mbstring 
+libapache2-mod-php
