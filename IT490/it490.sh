@@ -37,13 +37,6 @@ clone_repository() {
         exit 1
     fi
 
-    # Load the personal access token from the git_token file
-    if [ ! -e "$CURRENT_DIR/git_token" ]; then
-        echo "Error: File git_token not found."
-        exit 1
-    fi
-    git_token=$(<"$CURRENT_DIR/git_token")
-
     while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
         repo_name=$(basename "$repo_url" .git)
         repo_dir="$CURRENT_DIR/$repo_name"
@@ -53,12 +46,8 @@ clone_repository() {
             continue
         fi
 
-        # Construct authenticated URL
-        authenticated_url="https://$git_token@github.com/${repo_url#https://github.com/}"
-
         # Clone the repository
-        git clone "$authenticated_url" "$repo_dir" || {
-            echo $authenticated_url
+        git clone "$repo_url" "$repo_dir" || {
             echo "Failed to clone $repo_url"
             echo "repo_dir: $repo_dir"
             echo "repo_name: $repo_name"
