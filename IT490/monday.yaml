@@ -1,0 +1,29 @@
+# Basic query to get added orders
+curl -X POST https://api.monday.com/v2 \
+-H "Content-Type: application/json" \
+-H "Authorization: eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjQzMzQxNjYzNSwiYWFpIjoxMSwidWlkIjo2NjM1MTc0NCwiaWFkIjoiMjAyNC0xMS0wNlQyMTowNTo1NC42MjNaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NTg3OTYzOCwicmduIjoidXNlMSJ9.EYTSZKINw4iH8tZkc2CuyaMhkiOVpgMzDCQpqAuu9mU" \
+-d '{"query": "query { boards(ids: 1036806632) { groups(ids: \"topics\") { id title items_page(limit: 25, query_params: {rules: [{column_id: \"status\", compare_value: [5]}]}) { items { name id state } } } } }"}' | jq
+
+        "labels": {
+          "0": "Cancelled",
+          "1": "Paid/Printing",
+          "2": "Completed and removed",
+          "3": "Paid 1/2 $ (Staff/Own Filament)",
+          "4": "Queued (PAID)",
+          "5": "",
+          "6": "Class Code",
+          "7": "Review Needed",
+          "9": "Failed",
+          "10": "MISSING",
+          "19": "Reprint",
+          "110": "Internal/Quoted"
+
+
+# Another example where I filter class codes and show the class code value
+curl -X POST https://api.monday.com/v2 \
+-H "Content-Type: application/json" \
+-H "Authorization: eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjQzMzQxNjYzNSwiYWFpIjoxMSwidWlkIjo2NjM1MTc0NCwiaWFkIjoiMjAyNC0xMS0wNlQyMTowNTo1NC42MjNaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NTg3OTYzOCwicmduIjoidXNlMSJ9.EYTSZKINw4iH8tZkc2CuyaMhkiOVpgMzDCQpqAuu9mU" \
+-d '{"query": "query { boards(ids: 1036806632) { groups(ids: \"topics\") { id title items_page(limit: 25, query_params: {rules: [{column_id: \"status\", compare_value: [6]}]}) { items { name id column_values(ids: [\"status\",\"text2\"]) { column { title } text } state } } } } }"}' | jq
+
+
+
