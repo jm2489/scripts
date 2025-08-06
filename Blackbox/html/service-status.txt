@@ -1,0 +1,23 @@
+● corekeeper-server.service - CoreKeeper Dedicated Server
+     Loaded: loaded (/etc/systemd/system/corekeeper-server.service; enabled; preset: enabled)
+     Active: active (running) since Sat 2025-07-26 00:15:52 EDT; 2 days ago
+    Process: 1040 ExecStartPre=/usr/games/steamcmd +@sSteamCmdForcePPlatformType linux +force_install_dir /home/corekeeper-server +login anonymous +app_update 1963720 +quit (code=exited, status=0/SUCCESS)
+   Main PID: 1434 (_launch.sh)
+      Tasks: 84 (limit: 38323)
+     Memory: 1.4G (peak: 1.5G)
+        CPU: 16.503s
+     CGroup: /system.slice/corekeeper-server.service
+             ├─1434 /bin/bash /home/corekeeper-server/_launch.sh
+             ├─1445 Xvfb :99 -screen 0 1x1x24 -nolisten tcp
+             └─1446 /home/corekeeper-server/CoreKeeperServer -batchmode -logfile CoreKeeperServerLog.txt
+
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86FishingChart
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86SingleRangeRadar
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86DualRangeRadar
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86RadarOverlay
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86TraditionalSonar
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86ClearvuSonar
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86SidevuSonar
+Jul 26 00:15:52 server _launch.sh[1471]: > Warning:          Could not resolve keysym XF86NavInfo
+Jul 26 00:15:52 server _launch.sh[1471]: Errors from xkbcomp are not fatal to the X server
+Jul 26 00:16:02 server _launch.sh[1434]: Game ID: ItFeelsLikeWereFalling4The1stTime
